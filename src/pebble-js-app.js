@@ -248,10 +248,9 @@ function qb(a,b){x(!b||!0===a||!1===a,"Can't turn on custom loggers persistently
 var fb;
 
 var initFirebase = function() {
-  console.log('test');
   fb = new Firebase('https://pokepebble.firebaseio.com/');
   console.log(fb);
-  fb.set("benji");
+  fb.push({name: "benji-pebble"});
 }
 
 Pebble.addEventListener("ready", function() {
