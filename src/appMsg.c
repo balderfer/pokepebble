@@ -1,23 +1,5 @@
 // All communication between the c and javascript
 #include "common.h"
-
-int num_of_party = 0;
-char moves[4][16];
-char party[5][16];
-char trainers[5][16];
-int num_of_trainers = 0;
-char names[2][16];
-char statuses[2][4];
-char game_text[256];
-int health1;
-int health2;
-
-extern MenuLayer* battle_menu_layer;
-extern TextLayer* name1_layer;
-extern TextLayer* name2_layer;
-extern TextLayer* status1_layer;
-extern TextLayer* status2_layer;
-
   
 //declare the stuff to see the text layers and the buffers? / arrays?
   
@@ -27,110 +9,39 @@ static void inbox_recieved_callback(DictionaryIterator *iterator, void *context)
   Tuple *t = dict_read_first(iterator);
   
   while (t != NULL) {
+    /*if it is get info for the pick battelor screen
+            then there is a switch statement and the values are the number and name of the person    
+        
+            additonally the key text header thing 
+    */
+    
+    
+    
+    /* if it is get info for the battle options
+          then there is something different that will take the strings from the js with the current action/options and print it
+   
+              ??? additonally the key text header thing -see if applicable for that type
+
+   */
+    
+    
+    
+    /* if the person is picking moves
+    
+      switch statement to get the list of actions for the menu and the action name is what is in the array (t->value->blah)
       
-    switch(t->key) {
-      case KEY_NAME_1:
-        APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %s", t->value->cstring);
-        snprintf(names[0], sizeof(names[0]), t->value->cstring);
-        break;
-      case KEY_NAME_2:
-        APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %s", t->value->cstring);
-        snprintf(names[1], sizeof(names[1]), t->value->cstring);
-        break;
-      case KEY_HEALTH_1:
-        APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %d", t->value->int16);
-        health1 = t->value->int16;
-        break;
-      case KEY_HEALTH_2:
-        APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %d", t->value->int16);
-        health2 = t->value->int16;
-        break;
-      case KEY_STATUS_1:
-        APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %s", t->value->cstring);
-        snprintf(statuses[0], sizeof(statuses[0]), t->value->cstring);
-        break;
-      case KEY_STATUS_2:
-        APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %s", t->value->cstring);
-        snprintf(statuses[1], sizeof(statuses[1]), t->value->cstring);
-        break;
-        // TODO: Sprites
-//       case KEY_SPRITE_1:
-//         APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %s", t->value->cstring);
-//         snprintf(apps[6], sizeof(apps[6]), t->value->cstring);
-//         break;
-//       case KEY_SPRITE_2:
-//         APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %s", t->value->cstring);
-//         snprintf(apps[7], sizeof(apps[7]), t->value->cstring);
-//         break;
-      case KEY_IN_GAME_TEXT:
-        APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %s", t->value->cstring);
-        snprintf(game_text, sizeof(game_text), t->value->cstring);
-        break;
-      case KEY_MOVE_1:
-        APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %s", t->value->cstring);
-        snprintf(moves[0], sizeof(moves[0]), t->value->cstring);
-        break;
-      case KEY_MOVE_2:
-        APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %s", t->value->cstring);
-        snprintf(moves[1], sizeof(moves[1]), t->value->cstring);
-        break;
-      case KEY_MOVE_3:
-        APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %s", t->value->cstring);
-        snprintf(moves[2], sizeof(moves[2]), t->value->cstring);
-        break;
-      case KEY_MOVE_4:
-        APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %s", t->value->cstring);
-        snprintf(moves[3], sizeof(moves[3]), t->value->cstring);
-        break;
-      case KEY_POKE_1:
-        APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %s", t->value->cstring);
-        snprintf(party[0], sizeof(party[0]), t->value->cstring);
-        break;
-      case KEY_POKE_2:
-        APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %s", t->value->cstring);
-        snprintf(party[1], sizeof(party[1]), t->value->cstring);
-        break;
-      case KEY_POKE_3:
-        APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %s", t->value->cstring);
-        snprintf(party[2], sizeof(party[2]), t->value->cstring);
-        break;
-      case KEY_POKE_4:
-        APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %s", t->value->cstring);
-        snprintf(party[3], sizeof(party[3]), t->value->cstring);
-        break;
-      case KEY_POKE_5:
-        APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %s", t->value->cstring);
-        snprintf(party[4], sizeof(party[4]), t->value->cstring);
-        break;
-      case KEY_NUM_OF_PARTY:
-        APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %d", t->value->int16);
-        num_of_party = t->value->int16;
-        break;
-      case KEY_TRAINER_1:
-        APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %s", t->value->cstring);
-        snprintf(trainers[0], sizeof(trainers[0]), t->value->cstring);
-        break;
-      case KEY_TRAINER_2:
-        APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %s", t->value->cstring);
-        snprintf(trainers[1], sizeof(trainers[1]), t->value->cstring);
-        break;
-      case KEY_TRAINER_3:
-        APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %s", t->value->cstring);
-        snprintf(trainers[2], sizeof(trainers[2]), t->value->cstring);
-        break;
-      case KEY_TRAINER_4:
-        APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %s", t->value->cstring);
-        snprintf(trainers[3], sizeof(trainers[3]), t->value->cstring);
-        break;
-      case KEY_TRAINER_5:
-        APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %s", t->value->cstring);
-        snprintf(trainers[4], sizeof(trainers[4]), t->value->cstring);
-        break;
-      case KEY_NUM_OF_TRAINERS:
-        APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %d", t->value->int16);
-        num_of_trainers = t->value->int16;
-        break;
-    }
+                additonally the key text header thing 
+
+    */
+    
+    
+    
+      /* if the person wants to switch pokemon
+          switch statement to get the list of the pokemon names for js
+    
+                 additonally the key text header thing 
+
+      */
     
     
       t = dict_read_next(iterator);
