@@ -261,31 +261,33 @@ var locationOptions = {
 
 function locationSuccess(pos) {
   console.log('lat= ' + pos.coords.latitude + ' lon= ' + pos.coords.longitude);
-}
+};
 
 function locationError(err) {
   console.log('location error (' + err.code + '): ' + err.message);
-}
+};
 
 var fireGet = function(uniqueId){
   Firebase.INTERNAL.forceWebSockets();
   fb = new Firebase('https://pokepebble.firebaseio.com/');
+  console.log('fireget - ' + uniqueId);
 };
 
 var getAndSetUniqueId = function(callback){
-  var config_str = window.localStorage.getItem('config');
-  var config;
-  if (typeof(config_str) !== 'undefined'){
-    config = JSON.parse(config_str);
-    console.log('getAndSetUniqueId: ' + JSON.stringify(config));
-    var uniqueId = config["unique-id"];
-    console.log(uniqueId);
+//   var config_str = window.localStorage.getItem('config');
+//   var config;
+//   if (typeof(config_str) !== 'undefined'){
+//     config = JSON.parse(config_str);
+//     console.log('getAndSetUniqueId: ' + JSON.stringify(config));
+//     var uniqueId = config["unique-id"];
+//     console.log(uniqueId);
+  var uniqueId = 'benji';
     callback(uniqueId);
-    return;
-  } else {
-    Pebble.showSimpleNotificationOnPebble("Woah there!",
-        "You need to set your User ID in the Pebble app");
-  }
+//     return;
+//   } else {
+//     Pebble.showSimpleNotificationOnPebble("Woah there!",
+//         "You need to set your User ID in the Pebble app");
+//   }
 };
 
 Pebble.addEventListener("showConfiguration", function (e) {
@@ -293,22 +295,22 @@ Pebble.addEventListener("showConfiguration", function (e) {
   Pebble.openURL(url);
 });
 
-Pebble.addEventListener('webviewclosed', function(e) {
-  if (!e.response){
-    return;
-  }
-  var json = decodeURIComponent( e.response );
-  config = JSON.parse( json );
-  var username = config["unique-id"];
-  console.log("unique id is " + username);
+// Pebble.addEventListener('webviewclosed', function(e) {
+//   if (!e.response){
+//     return;
+//   }
+//   var json = decodeURIComponent( e.response );
+//   config = JSON.parse( json );
+//   var username = config["unique-id"];
+//   console.log("unique id is " + username);
 
-  window.localStorage.setItem( 'config', JSON.stringify( config ) );
+//   window.localStorage.setItem( 'config', {'unique-id': 'benji:W'} );
   
-  setOnline(username);
+//   setOnline(username);
+//   getUsersOnline();
   
-  getAndSetUniqueId(fireGet);
-});
-
+//   getAndSetUniqueId(fireGet);
+// });
 
 Pebble.addEventListener('appMessage', function(msg) {
 	console.log('PikaCHU!!! - new message - ' + JSON.stringify(msg));
@@ -320,7 +322,6 @@ Pebble.addEventListener("ready", function() {
   getAndSetUniqueId(fireGet);
   getUsersOnline();
 });
-
 
 // Useful functions
 // Post user online
@@ -335,44 +336,40 @@ var setOnline = function(username) {
       available: true
     })
   }, locationError, locationOptions);
-}
+};
 
 // Post user offline
 var setOffline = function(username) {
   fb.child('usersOnline').child(username).update({
     available: false
   });
-}
+};
 
 // Get the current users online
 var getUsersOnline = function() {
   fb.child('usersOnline').on('value', function(snapshot) {
-    console.log(JSON.stringify(snapshot.val()));
-    var hash = formatUsersOnline(snapshot.val());
+    var hash = formatOnlineUsers(snapshot.val());
+		var trainers = trainerArrayToPebbleHash(hash);
+	  console.log('trainers' + JSON.stringify(trainers));
 
     // TODO format however they want and return
-    Pebble.sendAppMessage(hash[0], function() {
-      Pebble.sendAppMessage({'Num_Of_Trainers': hash[1]});
-    });
+     Pebble.sendAppMessage(trainers, function(){
+			console.log('Successfully sent the trainers!');
+      Pebble.sendAppMessage({'Num_Of_Trainers': hash.length});
+     }, function() {
+			console.log('Didn\'t send the trainers!');
+     });
   });
-}
+};
 
 var formatOnlineUsers = function(users) {
   var userArray = [];
   var count = 0;
   for (var key in users) {
-    if (users.hasOwnProperty(key)) {
-      var user = users[key];
-      // user.name, user.pos ({ latitude: float, longitude: float }), user.available (true/false)
-      if (user.available && count < 5) {
-        userArray.push(user.name);
-        count++;
-      }
-    }
+		userArray.push(key);
   }
-  var hash = trainerArrayToPebbleHash(userArray);
-  return [hash, count];
-}
+  return userArray;
+};
 
 // Trainer hash
 var trainerArrayToPebbleHash = function(array) {
@@ -383,3 +380,10 @@ var trainerArrayToPebbleHash = function(array) {
     }
   return hash;
 };
+
+Pebble.addEventListener("ready", function() {
+  console.log("PokePebble js is ready");
+  getAndSetUniqueId(fireGet);
+  getUsersOnline();
+});
+

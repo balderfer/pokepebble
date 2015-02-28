@@ -158,8 +158,9 @@ static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
   
 //  *********************from here below is dependent on send command*********************
 //copied from wrist control, dont know what outbox is
-void temp_send_command(char* option, char* button) {
-  
+
+void send_challenge(char* trainer) {
+  APP_LOG(APP_LOG_LEVEL_INFO, "Trainer Name: %s", trainer);
   DictionaryIterator* outbox_iter;
   
   if(app_message_outbox_begin(&outbox_iter) != APP_MSG_OK) {
@@ -167,21 +168,26 @@ void temp_send_command(char* option, char* button) {
     return;
   }
   
+  dict_write_uint8(outbox_iter, KEY_OP_CODE, 1);
+  
+  dict_write_cstring(outbox_iter, KEY_OP_DATA, trainer);
+  
   if(outbox_iter == NULL) {
     return;
   }
-    
-    
-  // figure out what this is and modify/ removed to fit our app for all below code
-//   dict_write_cstring(outbox_iter, KEY_COMMAND_APP, option);
-//   if (button != NULL) {
-//     dict_write_cstring(outbox_iter, KEY_COMMAND_BUTTON, button);
-//   }
+  
   if (dict_write_end(outbox_iter) == 0) {
     APP_LOG(APP_LOG_LEVEL_DEBUG, "the parameters for writing were invalid");
   }
   app_message_outbox_send();
+}
 
+void send_move(char* move) {
+  APP_LOG(APP_LOG_LEVEL_INFO, "Trainer Name: %s", move);
+}
+
+void send_poke(char* poke) {
+  APP_LOG(APP_LOG_LEVEL_INFO, "Trainer Name: %s", poke);
 }
 
 
@@ -192,5 +198,6 @@ void app_message_init() {
   app_message_register_outbox_sent(outbox_sent_callback);
   
   app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
+  APP_LOG  (APP_LOG_LEVEL_INFO, "INIT APP MESSAGES");
   
 }

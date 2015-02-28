@@ -8,7 +8,19 @@ void battle_window_init(void);
 
 // appMsg.c
 void app_message_init(void);
+void send_challenge(char* trainer);
+void fetch_battle_menu(int option);
+void send_move(char* move);
+void send_poke(char* poke);
 
+// battleMenu.c
+void battle_menu_init(void);
+
+// dynamicMenu.c
+void dynamic_menu_init(int option);
+
+// trainerMenu.c
+void trainer_menu_init(void);
   
   
   
@@ -39,4 +51,6 @@ typedef enum {
   KEY_TRAINER_4 = 0x16,
   KEY_TRAINER_5 = 0x17,
   KEY_NUM_OF_TRAINERS = 0x18,
+  KEY_OP_CODE = 0x19,
+  KEY_OP_DATA = 0x1A,
 } MessageKey;
