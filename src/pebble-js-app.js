@@ -305,7 +305,6 @@ Pebble.addEventListener('webviewclosed', function(e) {
   window.localStorage.setItem( 'config', JSON.stringify( config ) );
   
   setOnline(username);
-  getUsersOnline();
   
   getAndSetUniqueId(fireGet);
 });
@@ -314,6 +313,7 @@ Pebble.addEventListener('webviewclosed', function(e) {
 Pebble.addEventListener("ready", function() {
   console.log("PokePebble js is ready");
   getAndSetUniqueId(fireGet);
+  getUsersOnline();
 });
 
 
@@ -343,24 +343,38 @@ var setOffline = function(username) {
 var getUsersOnline = function() {
   fb.child('usersOnline').on('value', function(snapshot) {
     console.log(JSON.stringify(snapshot.val()));
-    var users = formatUsersOnline(snapshot.val());
+    var hash = formatUsersOnline(snapshot.val());
 
     // TODO format however they want and return
+    Pebble.sendAppMessage(hash[0], function() {
+      Pebble.sendAppMessage({'Num_Of_Trainers': hash[1]});
+    });
   });
 }
 
 var formatOnlineUsers = function(users) {
   var userArray = [];
+  var count = 0;
   for (var key in users) {
     if (users.hasOwnProperty(key)) {
       var user = users[key];
       // user.name, user.pos ({ latitude: float, longitude: float }), user.available (true/false)
-      if (user.available) {
-        userArray.push({
-          name: user.name,
-          
-        })
+      if (user.available && count < 5) {
+        userArray.push(user.name);
+        count++;
       }
     }
   }
+  var hash = trainerArrayToPebbleHash(userArray);
+  return [hash, count];
 }
+
+// Trainer hash
+var trainerArrayToPebbleHash = function(array) {
+  hash = {};
+  for(var i = 0; i < array.length; i++) {
+      var key = 'Trainer_' + (i+1);
+      hash[key] = array[i];
+    }
+  return hash;
+};
