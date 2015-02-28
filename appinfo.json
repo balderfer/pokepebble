@@ -10,6 +10,7 @@
         "Name_1": 0,
         "Name_2": 1,
         "Num_Of_Party": 18,
+        "Num_Of_Trainers": 24,
         "Poke_1": 13,
         "Poke_2": 14,
         "Poke_3": 15,
@@ -18,9 +19,15 @@
         "Sprite_1": 6,
         "Sprite_2": 7,
         "Status_1": 4,
-        "Status_2": 5
+        "Status_2": 5,
+        "Trainer_1": 19,
+        "Trainer_2": 20,
+        "Trainer_3": 21,
+        "Trainer_4": 22,
+        "Trainer_5": 23
     },
     "capabilities": [
+        "location",
         "configurable"
     ],
     "companyName": "royfu@purdue.edu",

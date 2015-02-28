@@ -33,4 +33,10 @@ typedef enum {
   KEY_POKE_4 = 0x10,
   KEY_POKE_5 = 0x11,
   KEY_NUM_OF_PARTY = 0x12,
+  KEY_TRAINER_1 = 0x13,
+  KEY_TRAINER_2 = 0x14,
+  KEY_TRAINER_3 = 0x15,
+  KEY_TRAINER_4 = 0x16,
+  KEY_TRAINER_5 = 0x17,
+  KEY_NUM_OF_TRAINERS = 0x18,
 } MessageKey;

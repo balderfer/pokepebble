@@ -4,6 +4,8 @@
 int num_of_party = 0;
 char moves[4][16];
 char party[5][16];
+char trainers[5][16];
+int num_of_trainers = 0;
 char names[2][16];
 char statuses[2][4];
 char game_text[256];
@@ -103,6 +105,30 @@ static void inbox_recieved_callback(DictionaryIterator *iterator, void *context)
       case KEY_NUM_OF_PARTY:
         APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %d", t->value->int16);
         num_of_party = t->value->int16;
+        break;
+      case KEY_TRAINER_1:
+        APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %s", t->value->cstring);
+        snprintf(trainers[0], sizeof(trainers[0]), t->value->cstring);
+        break;
+      case KEY_TRAINER_2:
+        APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %s", t->value->cstring);
+        snprintf(trainers[1], sizeof(trainers[1]), t->value->cstring);
+        break;
+      case KEY_TRAINER_3:
+        APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %s", t->value->cstring);
+        snprintf(trainers[2], sizeof(trainers[2]), t->value->cstring);
+        break;
+      case KEY_TRAINER_4:
+        APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %s", t->value->cstring);
+        snprintf(trainers[3], sizeof(trainers[3]), t->value->cstring);
+        break;
+      case KEY_TRAINER_5:
+        APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %s", t->value->cstring);
+        snprintf(trainers[4], sizeof(trainers[4]), t->value->cstring);
+        break;
+      case KEY_NUM_OF_TRAINERS:
+        APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %d", t->value->int16);
+        num_of_trainers = t->value->int16;
         break;
     }
     
