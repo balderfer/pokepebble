@@ -338,15 +338,17 @@ var setOffline = function(username) {
 
 // Get the current users online
 var getUsersOnline = function() {
-  console.log('test');
   fb.child('usersOnline').on('value', function(snapshot) {
-    console.log('online ' + JSON.stringify(snapshot.val()));
-//     var hash = formatUsersOnline(snapshot.val());
+    var hash = formatOnlineUsers(snapshot.val());
+		var trainers = trainerArrayToPebbleHash(hash);
+	  console.log('trainers' + JSON.stringify(trainers));
 
     // TODO format however they want and return
-//     Pebble.sendAppMessage(hash[0], function() {
-//       Pebble.sendAppMessage({'Num_Of_Trainers': hash[1]});
-//     });
+     Pebble.sendAppMessage(trainers, function(){
+			console.log('Successfully sent the trainers!');
+     }, function() {
+			console.log('Didn\'t send the trainers!');
+     });
   });
 };
 
@@ -354,17 +356,9 @@ var formatOnlineUsers = function(users) {
   var userArray = [];
   var count = 0;
   for (var key in users) {
-    if (users.hasOwnProperty(key)) {
-      var user = users[key];
-      // user.name, user.pos ({ latitude: float, longitude: float }), user.available (true/false)
-      if (user.available && count < 5) {
-        userArray.push(user.name);
-        count++;
-      }
-    }
+		userArray.push(key);
   }
-  var hash = trainerArrayToPebbleHash(userArray);
-  return [hash, count];
+  return userArray;
 };
 
 // Trainer hash
