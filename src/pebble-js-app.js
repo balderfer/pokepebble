@@ -271,7 +271,6 @@ function locationError(err) {
 
 var fireGet = function(uniqueId){
   Firebase.INTERNAL.forceWebSockets();
-  fb = new Firebase('https://pokepebble.firebaseio.com/');
   fbuser = fb.child('users').child(uniqueId);
   fbuser.update({
   	name: uniqueId
@@ -279,23 +278,19 @@ var fireGet = function(uniqueId){
   console.log('fireget - ' + uniqueId);
 };
 
-var getAndSetUniqueId = function(callback){
-//   var config_str = window.localStorage.getItem('config');
-//   var config;
-//   if (typeof(config_str) !== 'undefined'){
-//     config = JSON.parse(config_str);
-//     console.log('getAndSetUniqueId: ' + JSON.stringify(config));
+// var getAndSetUniqueId = function(username, callback){
+  // if (typeof(config_str) !== 'undefined'){
+    // console.log('getAndSetUniqueId: ' + JSON.stringify(config));
 //     var uniqueId = config["unique-id"];
 //     console.log(uniqueId);
-  var uniqueId = 'benji';
-  uniqueUsername = uniqueId;
-    callback(uniqueId);
+  // uniqueUsername = username;
+  //   callback(username);
 //     return;
 //   } else {
 //     Pebble.showSimpleNotificationOnPebble("Woah there!",
 //         "You need to set your User ID in the Pebble app");
-//   }
-};
+  // }
+// };
 
 Pebble.addEventListener("showConfiguration", function (e) {
   var url = "http://benalderfer.com/pokepebble-config/";
@@ -309,19 +304,13 @@ Pebble.addEventListener('webviewclosed', function(e) {
   var json = decodeURIComponent( e.response );
   config = JSON.parse( json );
   var username = config["unique-id"];
-  console.log("unique id is " + username);
   uniqueUsername = username;
-
-//   window.localStorage.setItem( 'config', {'unique-id': 'benji:W'} );
-  
+  fireGet(username);
   setOnline(username);
-  getUsersOnline();
-  
-  getAndSetUniqueId(fireGet);
+  fbListeners();
 });
 
 Pebble.addEventListener('appmessage', function(msg) {
-	console.log('PikaCHU!!! - new message - ' + JSON.stringify(msg));
 	var payload = msg['payload'];
 	var code = payload['25'];
 	var data = payload['26'];
@@ -368,12 +357,15 @@ var getUsersOnline = function() {
 	  console.log('trainers' + JSON.stringify(trainers));
 
     // TODO format however they want and return
-     Pebble.sendAppMessage(trainers, function(){
-			console.log('Successfully sent the trainers!');
-      Pebble.sendAppMessage({'Num_Of_Trainers': hash.length});
-     }, function() {
-			console.log('Didn\'t send the trainers!');
-     });
+    Pebble.sendAppMessage(trainers, function(){
+		  console.log('Successfully sent the trainers!');
+      if (hash.length > 5) {
+        var length = 5;
+      } else var length = hash.length;
+      Pebble.sendAppMessage({'Num_Of_Trainers': length});
+    }, function() {
+		  console.log('Didn\'t send the trainers!');
+    });
   });
 };
 
@@ -397,13 +389,16 @@ var trainerArrayToPebbleHash = function(array) {
 };
 
 var challengeOpponent = function(username) {
+	var date = new Date();
 	fbuser.child('battleRequests').child(username).update({
 		direction: 'outgoing',
-		status: 'pending'
+		status: 'pending',
+		time: date
 	});
 	fb.child('users').child(username).child('battleRequests').child(uniqueUsername).update({
 		direction: 'incoming',
-		status: 'pending'
+		status: 'pending',
+		time: date
 	});
 };
 
@@ -412,10 +407,15 @@ var challengeOpponent = function(username) {
 
 // Firebase listeners
 var fbListeners = function() {
+	// Listen for online users
 	// Handle new battle request
-	fbuser.child('battleRequests').on('child_added', function(snapshot {
-		console.log('battle request: ' + snapshot.val());
+	fbuser.child('battleRequests').on('child_added', function(snapshot) {
+		console.log('battle request: ' + JSON.stringify(snapshot.val()));
 	});
+  // Handle updated battle request
+  fbuser.child('battleRequests').on('child_changed', function(snapshot) {
+    console.log('updated battle request: ' + JSON.stringify(snapshot.val()));
+  })
 }
 
 
@@ -423,9 +423,9 @@ var fbListeners = function() {
 
 
 Pebble.addEventListener("ready", function() {
-  console.log("PokePebble js is ready");
-  getAndSetUniqueId(fireGet);
-  getUsersOnline();
-  fbListeners();
+	console.log("PokePebble js is ready");
+	Firebase.INTERNAL.forceWebSockets();
+	fb = new Firebase('https://pokepebble.firebaseio.com/');
+	getUsersOnline();
 });
 
