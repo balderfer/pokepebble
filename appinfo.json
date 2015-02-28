@@ -1,5 +1,31 @@
 {
-    "appKeys": {},
+    "appKeys": {
+        "Health_1": 2,
+        "Health_2": 3,
+        "In_Game_Text": 8,
+        "Move_1": 9,
+        "Move_2": 10,
+        "Move_3": 11,
+        "Move_4": 12,
+        "Name_1": 0,
+        "Name_2": 1,
+        "Num_Of_Party": 18,
+        "Num_Of_Trainers": 24,
+        "Poke_1": 13,
+        "Poke_2": 14,
+        "Poke_3": 15,
+        "Poke_4": 16,
+        "Poke_5": 17,
+        "Sprite_1": 6,
+        "Sprite_2": 7,
+        "Status_1": 4,
+        "Status_2": 5,
+        "Trainer_1": 19,
+        "Trainer_2": 20,
+        "Trainer_3": 21,
+        "Trainer_4": 22,
+        "Trainer_5": 23
+    },
     "capabilities": [
         "location",
         "configurable"
@@ -10,8 +36,11 @@
     "resources": {
         "media": []
     },
-    "sdkVersion": "2",
+    "sdkVersion": "3",
     "shortName": "PokePebble",
+    "targetPlatforms": [
+        "aplite"
+    ],
     "uuid": "448f5b51-26a3-4e11-9dd1-781e3af9e0fd",
     "versionCode": 1,
     "versionLabel": "1.0",
