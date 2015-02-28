@@ -310,6 +310,11 @@ Pebble.addEventListener('webviewclosed', function(e) {
 });
 
 
+Pebble.addEventListener('appMessage', function(msg) {
+	console.log('PikaCHU!!! - new message - ' + JSON.stringify(msg));
+});
+
+
 Pebble.addEventListener("ready", function() {
   console.log("PokePebble js is ready");
   getAndSetUniqueId(fireGet);
