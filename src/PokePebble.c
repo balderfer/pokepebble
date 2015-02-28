@@ -1,4 +1,4 @@
-#include <pebble.h>
+#include "common.h"
 
 static Window *s_init_window;
 static TextLayer *s_load_layer;
