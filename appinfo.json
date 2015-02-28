@@ -1,19 +1,20 @@
 {
-  "uuid": "09a1f82c-e744-46d7-ae08-7ad1d5f886c5",
-  "shortName": "pokepebble",
-  "longName": "pokepebble",
-  "companyName": "MakeAwesomeHappen",
-  "versionCode": 1,
-  "versionLabel": "1.0",
-  "sdkVersion": "3",
-  "targetPlatforms": ["aplite", "basalt"],
-  "watchapp": {
-    "watchface": false
-  },
-  "appKeys": {
-    "dummy": 0
-  },
-  "resources": {
-    "media": []
-  }
+    "appKeys": {},
+    "capabilities": [
+        ""
+    ],
+    "companyName": "royfu@purdue.edu",
+    "longName": "PokePebble",
+    "projectType": "native",
+    "resources": {
+        "media": []
+    },
+    "sdkVersion": "3",
+    "shortName": "PokePebble",
+    "uuid": "448f5b51-26a3-4e11-9dd1-781e3af9e0fd",
+    "versionCode": 1,
+    "versionLabel": "1.0",
+    "watchapp": {
+        "watchface": false
+    }
 }
