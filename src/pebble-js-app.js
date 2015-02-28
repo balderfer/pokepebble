@@ -251,8 +251,116 @@ U.prototype.he=function(a,b){x("Firebase.changeEmail",2,2,arguments.length);V("F
 U.prototype.Me=function(a,b){x("Firebase.resetPassword",2,2,arguments.length);V("Firebase.resetPassword",1,a,!1);Qf("Firebase.resetPassword",a,"email");A("Firebase.resetPassword",2,b,!1);this.k.Q.Me(a,b)};U.prototype.resetPassword=U.prototype.Me;U.goOffline=function(){x("Firebase.goOffline",0,0,arguments.length);Wh.Ob().qb()};U.goOnline=function(){x("Firebase.goOnline",0,0,arguments.length);Wh.Ob().ic()};
 function Rc(a,b){J(!b||!0===a||!1===a,"Can't turn on custom loggers persistently.");!0===a?("undefined"!==typeof console&&("function"===typeof console.log?yb=q(console.log,console):"object"===typeof console.log&&(yb=function(a){console.log(a)})),b&&P.set("logging_enabled",!0)):a?yb=a:(yb=null,P.remove("logging_enabled"))}U.enableLogging=Rc;U.ServerValue={TIMESTAMP:{".sv":"timestamp"}};U.SDK_VERSION="2.2.1";U.INTERNAL=W;U.Context=Wh;U.TEST_ACCESS=Z;})();
 
+var fb;
+
+var locationOptions = {
+  enableHighAccuracy: true, 
+  maximumAge: 10000, 
+  timeout: 10000
+};
+
+function locationSuccess(pos) {
+  console.log('lat= ' + pos.coords.latitude + ' lon= ' + pos.coords.longitude);
+}
+
+function locationError(err) {
+  console.log('location error (' + err.code + '): ' + err.message);
+}
+
+var fireGet = function(uniqueId){
+  Firebase.INTERNAL.forceWebSockets();
+  fb = new Firebase('https://pokepebble.firebaseio.com/');
+};
+
+var getAndSetUniqueId = function(callback){
+  var config_str = window.localStorage.getItem('config');
+  var config;
+  if (typeof(config_str) !== 'undefined'){
+    config = JSON.parse(config_str);
+    console.log('getAndSetUniqueId: ' + JSON.stringify(config));
+    var uniqueId = config["unique-id"];
+    console.log(uniqueId);
+    callback(uniqueId);
+    return;
+  } else {
+    Pebble.showSimpleNotificationOnPebble("Woah there!",
+        "You need to set your User ID in the Pebble app");
+  }
+};
+
+Pebble.addEventListener("showConfiguration", function (e) {
+  var url = "http://benalderfer.com/pokepebble-config/";
+  Pebble.openURL(url);
+});
+
+Pebble.addEventListener('webviewclosed', function(e) {
+  if (!e.response){
+    return;
+  }
+  var json = decodeURIComponent( e.response );
+  config = JSON.parse( json );
+  var username = config["unique-id"];
+  console.log("unique id is " + username);
+
+  window.localStorage.setItem( 'config', JSON.stringify( config ) );
+  
+  setOnline(username);
+  getUsersOnline();
+  
+  getAndSetUniqueId(fireGet);
+});
+
+
 Pebble.addEventListener("ready", function() {
   console.log("PokePebble js is ready");
-  var fb = new Firebase('https://pokepebble.firebaseio.com/');
-  fb.push({name: "pebble"});
+  getAndSetUniqueId(fireGet);
 });
+
+
+// Useful functions
+// Post user online
+var setOnline = function(username) {
+  navigator.geolocation.getCurrentPosition(function(pos) {
+    fb.child('usersOnline').child(username).update({
+      name: username,
+      pos: {
+        latitude: pos.coords.latitude,
+        longitude: pos.coords.longitude
+      },
+      available: true
+    })
+  }, locationError, locationOptions);
+}
+
+// Post user offline
+var setOffline = function(username) {
+  fb.child('usersOnline').child(username).update({
+    available: false
+  });
+}
+
+// Get the current users online
+var getUsersOnline = function() {
+  fb.child('usersOnline').on('value', function(snapshot) {
+    console.log(JSON.stringify(snapshot.val()));
+    var users = formatUsersOnline(snapshot.val());
+
+    // TODO format however they want and return
+  });
+}
+
+var formatOnlineUsers = function(users) {
+  var userArray = [];
+  for (var key in users) {
+    if (users.hasOwnProperty(key)) {
+      var user = users[key];
+      // user.name, user.pos ({ latitude: float, longitude: float }), user.available (true/false)
+      if (user.available) {
+        userArray.push({
+          name: user.name,
+          
+        })
+      }
+    }
+  }
+}
