@@ -11,6 +11,9 @@
     },
     "sdkVersion": "3",
     "shortName": "PokePebble",
+    "targetPlatforms": [
+        "aplite"
+    ],
     "uuid": "448f5b51-26a3-4e11-9dd1-781e3af9e0fd",
     "versionCode": 1,
     "versionLabel": "1.0",
