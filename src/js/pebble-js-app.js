@@ -273,23 +273,46 @@ function locationError(err) {
   console.log('location error (' + err.code + '): ' + err.message);
 };
 
-var fireGet = function(uniqueId, pokemon){
-  console.log('test, REMOVE FOR PROD ' + uniqueId + ' ' + pokemon);
+var fireGet = function(config){
+  console.log('test, REMOVE FOR PROD ' + config["unique-id"]);
+Firebase.INTERNAL.forceWebSockets();
 
-  Firebase.INTERNAL.forceWebSockets();
-  fbuser = fb.child('users').child(uniqueId);
-  fb.child('pokemon').child(pokemon).once('value', function(snapshot) {
-    userObject = {
-      name: uniqueId,
-      battleRequest: null,
-      currentBattle: null,
-      pokemon: snapshot.val()
-    };
-    userObject.pokemon.name = pokemon;
-    fbuser.update(userObject);
-    userId = uniqueId;
-    console.log('fireget - ' + uniqueId);
+  fb.child('pokemon').child(config["pokemon"]).once('value', function(pokemon) {
+  	fb.child('moves').child(config["move1"].replace(/\s+/g, '')).once('value', function(move1) {
+  	  fb.child('moves').child(config["move2"].replace(/\s+/g, '')).once('value', function(move2) {
+  	    fb.child('moves').child(config["move3"].replace(/\s+/g, '')).once('value', function(move3) {
+  		  fb.child('moves').child(config["move4"].replace(/\s+/g, '')).once('value', function(move4) {
+  		  
+
+				fbuser = fb.child('users').child(config["unique-id"]);
+
+				var poke = pokemon.val();
+				poke.name = config["pokemon"];
+				poke.moves = [];
+				poke.moves.push(move1.val());
+				poke.moves.push(move2.val());
+				poke.moves.push(move3.val());
+				poke.moves.push(move4.val());
+
+				userObject = {
+				  name: config["unique-id"],
+				  battleRequest: null,
+				  currentBattle: 0,
+				  pokemon: poke
+				};
+				console.log(JSON.stringify(userObject));
+				fbuser.update(userObject);
+				userId = config["unique-id"];
+				console.log('fireget - ' + config["unique-id"]);
+				fbListeners();
+
+
+  		  });
+  		});
+  	  });
+  	});
   });
+
 };
 
 Pebble.addEventListener("showConfiguration", function (e) {
@@ -304,16 +327,15 @@ Pebble.addEventListener('webviewclosed', function(e) {
   var json = decodeURIComponent( e.response );
   config = JSON.parse( json );
   var username = config["unique-id"];
-  var mainPokemon = config["pokemon"];
 
-  window.localStorage.setItem('config', JSON.stringify(config));
+	window.localStorage.setItem('config', JSON.stringify(config));
 
-  uniqueUsername = username;
-  fireGet(username, mainPokemon);
-  setOnline(username, function() {
-    getUsersOnline();
-  });
-  fbListeners();
+	uniqueUsername = username;
+	fireGet(config);
+	setOnline(username, function() {
+		getUsersOnline();
+	});
+
 });
 
 Pebble.addEventListener('appmessage', function(msg) {
@@ -333,6 +355,12 @@ Pebble.addEventListener('appmessage', function(msg) {
       break;
     case 1:
       challengeOpponent(data);
+      break;
+    case 2:
+      collectTurn(2, data);
+      break;
+    case 3:
+      collectTurn(3, data);
       break;
     case 4:
       setOffline();
@@ -484,6 +512,8 @@ var acceptBattle = function(cha) {
       challenger: snapshot.val(),
       status: 'battling'
     };
+    battleData.challenger.pokemon.damage = 0;
+    battleData.opponent.pokemon.damage = 0;
     var newBattle = fb.child('battles').push(battleData);
 
     var battleId = newBattle.key();
@@ -532,6 +562,9 @@ function convert(url, success) {
 var sendBattleData = function() {
   fbuser.child('currentBattle').once('value', function(battleId) {
     fb.child('battles').child(battleId.val()).once('value', function(snapshot) {
+
+    	battleData = snapshot.val();
+
       if (snapshot.val().challenger.name != userObject.name) {
         var opData = snapshot.val().challenger;
         var myData = snapshot.val().opponent;
@@ -551,15 +584,18 @@ var sendBattleData = function() {
         convert(url1, function(bytes1) {
           convert(url2, function(bytes2) {
             Pebble.sendAppMessage({
-              "Sprite_1": bytes1,
-              "Sprite_2": bytes2
+              // "Sprite_1": bytes1,
+              // "Sprite_2": bytes2
             }, function() {
               console.log('break3');
+              console.log('damage: ' + opData.pokemon.damage);
+              console.log('hp: ' + opData.pokemon.bs.hp);
+              console.log('calc: ' + ((opData.pokemon.bs.hp - opData.pokemon.damage) / opData.pokemon.bs.hp));
               Pebble.sendAppMessage({
                 'Name_1': myData.pokemon.name,
                 'Name_2': opData.pokemon.name,
-                'Health_1': myData.pokemon.bs.hp,
-                'Health_2': opData.pokemon.bs.hp,
+                'Health_1': ((myData.pokemon.bs.hp - myData.pokemon.damage) / myData.pokemon.bs.hp)*100,
+                'Health_2': ((opData.pokemon.bs.hp - opData.pokemon.damage) / opData.pokemon.bs.hp)*100,
                 'Status_1': 'BRN',
                 'Status_2': 'PSN',
                 'In_Game_Text': example_text,
@@ -582,7 +618,38 @@ var sendBattleData = function() {
   });
 };
 
+var collectTurn = function(type, data) {
+	if (battleData.challenger.name == userObject.name) {
+		// You are the challenger
+		// Handles all logic
+		console.log('challenger: ' + JSON.stringify(battleData));
+		var chDamage = 50; //CHANGE LATER
+		var opDamage = 30; //CHANGE LATER
+		battleData.opponent.pokemon.damage += chDamage;
+		battleData.challenger.pokemon.damage += opDamage;
 
+		// Check if dead
+
+
+		fbuser.child('currentBattle').once('value', function(battleId) {
+    		fb.child('battles').child(battleId.val()).update(battleData);
+    		sendBattleData();
+    	});
+
+
+	}
+	else {
+		// You are opponent
+		// Waits for challenger to handle logic
+		console.log('opponent: ' + JSON.stringify(battleData));
+
+		fbuser.child('currentBattle').once('value', function(battleId) {
+			fb.child('battles').child(battleId.val()).on('child_changed', function(snapshot) {
+				sendBattleData();
+			});
+		});
+	}
+}
 
 
 
@@ -598,12 +665,9 @@ var sendBattleData = function() {
 var fbListeners = function() {
   // Handle updated battle request
   fbuser.child('battleRequest').on('value', function(snapshot) {
-    if (!snapshot.val()) {
-      console.log('request deleted');
-    }
     // else if (snapshot.val().status == 'accepted')
       // enterBattle(snapshot.val().opponent);
-    else if (snapshot.val().direction == 'incoming')
+    if (snapshot.val().direction == 'incoming')
       incomingRequest(snapshot.val().opponent);
   });
   // Handle battle initiated
@@ -630,12 +694,11 @@ Pebble.addEventListener("ready", function() {
       console.log('config_str ' + config_str);
       var config = JSON.parse(config_str);
       console.log('config ' + config);
-      fireGet(config['unique-id'], config['pokemon']);
+      fireGet(config);
       uniqueUsername = config['unique-id'];
       setOnline(config['unique-id'], function() {
         getUsersOnline();
       });
-      fbListeners();
     }
 });
 
