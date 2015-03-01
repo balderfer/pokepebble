@@ -5,6 +5,16 @@ static TextLayer* s_text_layer;
 
 extern char incoming_request[16];
 
+static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
+  accept_request(incoming_request);
+  // TODO Move to battle window
+}
+
+static void click_config_provider(void *context) {
+  // Register the ClickHandlers
+  window_single_click_subscribe(BUTTON_ID_SELECT, select_click_handler);
+}
+
 static void window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
 
@@ -23,6 +33,10 @@ static void window_unload(Window *window) {
 
 void incoming_request_init(void) {
   window = window_create();
+
+  // For initial select clicking
+  window_set_click_config_provider(window, click_config_provider);
+
   window_set_window_handlers(window, (WindowHandlers) {
     .load = window_load,
     .unload = window_unload,

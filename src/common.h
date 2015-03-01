@@ -13,6 +13,8 @@ void send_challenge(char* trainer);
 // void fetch_battle_menu(int option);
 void send_move(char* move);
 void send_poke(char* poke);
+void accept_request(char* name);
+void set_offline(void);
 
 // battleMenu.c
 void battle_menu_init(void);
@@ -58,4 +60,5 @@ typedef enum {
   KEY_OP_DATA = 0x1A,
   KEY_R_INCOMING = 0x1B,
   KEY_VIEW_USERS = 0x1C,
+  KEY_START_BATTLE = 0x1D
 } MessageKey;

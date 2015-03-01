@@ -252,6 +252,8 @@ U.prototype.Me=function(a,b){x("Firebase.resetPassword",2,2,arguments.length);V(
 function Rc(a,b){J(!b||!0===a||!1===a,"Can't turn on custom loggers persistently.");!0===a?("undefined"!==typeof console&&("function"===typeof console.log?yb=q(console.log,console):"object"===typeof console.log&&(yb=function(a){console.log(a)})),b&&P.set("logging_enabled",!0)):a?yb=a:(yb=null,P.remove("logging_enabled"))}U.enableLogging=Rc;U.ServerValue={TIMESTAMP:{".sv":"timestamp"}};U.SDK_VERSION="2.2.1";U.INTERNAL=W;U.Context=Wh;U.TEST_ACCESS=Z;})();
 
 var fb;
+var fbuser;
+var userId;
 
 var locationOptions = {
   enableHighAccuracy: true, 
@@ -271,8 +273,11 @@ var fireGet = function(uniqueId){
   Firebase.INTERNAL.forceWebSockets();
   fbuser = fb.child('users').child(uniqueId);
   fbuser.update({
-    name: uniqueId
+    name: uniqueId,
+    battleRequest: null,
+    currentBattle: null
   });
+  userId = uniqueId;
   console.log('fireget - ' + uniqueId);
 };
 
@@ -290,10 +295,10 @@ Pebble.addEventListener('webviewclosed', function(e) {
   var username = config["unique-id"];
   uniqueUsername = username;
   fireGet(username);
-  setOnline(username);
-  getUsersOnline();
+  setOnline(username, function() {
+    getUsersOnline();
+  });
   fbListeners();
-  Pebble.sendAppMessage({'View_Incoming': 1});
 });
 
 Pebble.addEventListener('appmessage', function(msg) {
@@ -303,11 +308,13 @@ Pebble.addEventListener('appmessage', function(msg) {
   console.log('code:data -- ' + code + ':' + data);
   switch(code) {
     case 0:
-
+      acceptBattle(data);
       break;
     case 1:
       challengeOpponent(data);
       break;
+    case 4:
+      setOffline();
   }
 });
 
@@ -317,7 +324,7 @@ Pebble.addEventListener('appmessage', function(msg) {
 
 // Useful functions
 // Post user online
-var setOnline = function(username) {
+var setOnline = function(username, callback) {
   navigator.geolocation.getCurrentPosition(function(pos) {
     fb.child('usersOnline').child(username).update({
       name: username,
@@ -326,15 +333,15 @@ var setOnline = function(username) {
         longitude: pos.coords.longitude
       },
       available: true
-    })
+    });
+    callback();
   }, locationError, locationOptions);
 };
 
 // Post user offline
-var setOffline = function(username) {
-  fb.child('usersOnline').child(username).update({
-    available: false
-  });
+var setOffline = function() {
+  fb.child('usersOnline').child(userId).set(null);
+  fbuser.child('battleRequest').set(null);
 };
 
 // Get the current users online
@@ -346,11 +353,14 @@ var getUsersOnline = function() {
 
       // TODO format however they want and return
       Pebble.sendAppMessage(trainers, function(){
-            console.log('Successfully sent the trainers!');
+        console.log('Successfully sent the trainers!');
         if (hash.length > 5) {
           var length = 5;
         } else var length = hash.length;
-        Pebble.sendAppMessage({'Num_Of_Trainers': length});
+        Pebble.sendAppMessage({
+          'Num_Of_Trainers': length,
+          'View_Incoming': 1
+        });
       }, function() {
             console.log('Didn\'t send the trainers!');
       });
@@ -373,7 +383,6 @@ var formatOnlineUsers = function(users) {
 // Trainer hash
 var trainerArrayToPebbleHash = function(array, callback) {
   hash = {};
-  console.log('test');
   // Sort by location
   navigator.geolocation.getCurrentPosition(function(pos) {
     for(var i = 1; i < array.length - 1; i++) {
@@ -387,6 +396,10 @@ var trainerArrayToPebbleHash = function(array, callback) {
     }
 
     for(var i = 0; i < array.length && i < 5; i++) {
+      if (array[i].name == userId) {
+        array.splice(i, 1);
+        if (i >= array.length) break;
+      }
       var key = 'Trainer_' + (i+1);
       hash[key] = array[i].name;
     }
@@ -400,17 +413,17 @@ var calcDist = function(pos1, pos2) {
 
 var challengeOpponent = function(username) {
     var date = new Date();
-    fbuser.child('battleRequests').child(username).update({
-        direction: 'outgoing',
-        status: 'pending',
-    opponent: username,
-        time: date
+    fbuser.child('battleRequest').update({
+      direction: 'outgoing',
+      status: 'pending',
+      opponent: username,
+      time: date
     });
-    fb.child('users').child(username).child('battleRequests').child(uniqueUsername).update({
-        direction: 'incoming',
-        status: 'pending',
-    opponent: uniqueUsername,
-        time: date
+    fb.child('users').child(username).child('battleRequest').update({
+      direction: 'incoming',
+      status: 'pending',
+      opponent: uniqueUsername,
+      time: date
     });
 };
 
@@ -418,9 +431,31 @@ var incomingRequest = function(opp) {
   Pebble.sendAppMessage({'R_Incoming': opp});
 }
 
+var acceptBattle = function(cha) {
+  // Initialize fb battles
+  var newBattle = fb.child('battles').push({
+    opponent: {
+      name: userId
+    },
+    challenger: {
+      name: cha
+    },
+    status: 'battling'
+  });
 
+  var battleId = newBattle.key();
+  fbuser.child('currentBattle').set(battleId);
+  battleHandler(newBattle);
+  fb.child('users').child(cha).child('currentBattle').set(battleId);
+}
 
-
+var battleHandler = function(data) {
+  console.log(data);
+  // Todo send data instead of 1
+  Pebble.sendAppMessage({
+    'Start_Battle': 1
+  });
+}
 
 
 
@@ -428,13 +463,18 @@ var incomingRequest = function(opp) {
 
 // Firebase listeners
 var fbListeners = function() {
-    // Handle new battle request
-    fbuser.child('battleRequests').on('child_added', function(snapshot) {
-    incomingRequest(snapshot.val().opponent);
-    });
   // Handle updated battle request
-  fbuser.child('battleRequests').on('child_changed', function(snapshot) {
-    incomingRequest(snapshot.val().opponent);
+  fbuser.child('battleRequest').on('value', function(snapshot) {
+    if (snapshot.val().status == 'accepted')
+      enterBattle(snapshot.val().opponent);
+    else if (snapshot.val().direction == 'incoming')
+      incomingRequest(snapshot.val().opponent);
+  });
+  // Handle battle initiated
+  fbuser.child('currentBattle').on('value', function(battleId) {
+    fb.child('battles').child(battleId.val()).on('value', function(snapshot) {
+      battleHandler(snapshot.val());
+    });
   });
 }
 
@@ -446,6 +486,5 @@ Pebble.addEventListener("ready", function() {
     console.log("PokePebble js is ready");
     Firebase.INTERNAL.forceWebSockets();
     fb = new Firebase('https://pokepebble.firebaseio.com/');
-    getUsersOnline();
 });
 

@@ -252,6 +252,8 @@ U.prototype.Me=function(a,b){x("Firebase.resetPassword",2,2,arguments.length);V(
 function Rc(a,b){J(!b||!0===a||!1===a,"Can't turn on custom loggers persistently.");!0===a?("undefined"!==typeof console&&("function"===typeof console.log?yb=q(console.log,console):"object"===typeof console.log&&(yb=function(a){console.log(a)})),b&&P.set("logging_enabled",!0)):a?yb=a:(yb=null,P.remove("logging_enabled"))}U.enableLogging=Rc;U.ServerValue={TIMESTAMP:{".sv":"timestamp"}};U.SDK_VERSION="2.2.1";U.INTERNAL=W;U.Context=Wh;U.TEST_ACCESS=Z;})();
 
 var fb;
+var fbuser;
+var userId;
 
 var locationOptions = {
   enableHighAccuracy: true, 
@@ -273,6 +275,7 @@ var fireGet = function(uniqueId){
   fbuser.update({
     name: uniqueId
   });
+  userId = uniqueId;
   console.log('fireget - ' + uniqueId);
 };
 
@@ -303,7 +306,7 @@ Pebble.addEventListener('appmessage', function(msg) {
   console.log('code:data -- ' + code + ':' + data);
   switch(code) {
     case 0:
-
+      acceptBattle(data);
       break;
     case 1:
       challengeOpponent(data);
@@ -401,16 +404,16 @@ var calcDist = function(pos1, pos2) {
 var challengeOpponent = function(username) {
     var date = new Date();
     fbuser.child('battleRequests').child(username).update({
-        direction: 'outgoing',
-        status: 'pending',
-    opponent: username,
-        time: date
+      direction: 'outgoing',
+      status: 'pending',
+      opponent: username,
+      time: date
     });
     fb.child('users').child(username).child('battleRequests').child(uniqueUsername).update({
-        direction: 'incoming',
-        status: 'pending',
-    opponent: uniqueUsername,
-        time: date
+      direction: 'incoming',
+      status: 'pending',
+      opponent: uniqueUsername,
+      time: date
     });
 };
 
@@ -418,7 +421,22 @@ var incomingRequest = function(opp) {
   Pebble.sendAppMessage({'R_Incoming': opp});
 }
 
+var acceptBattle = function(cha) {
+  // Initialize fb battles
+  var newBattle = fb.child('battles').push({
+    opponent: {
+      name: userId
+    },
+    challenger: {
+      name: cha
+    },
+    status: 'battling'
+  });
 
+  var battleId = newBattle.key();
+  fbuser.child('currentBattle').set(battleId);
+  fb.child('users').child(cha).child('currentBattle').set(battleId);
+}
 
 
 
@@ -429,12 +447,16 @@ var incomingRequest = function(opp) {
 // Firebase listeners
 var fbListeners = function() {
     // Handle new battle request
-    fbuser.child('battleRequests').on('child_added', function(snapshot) {
-    incomingRequest(snapshot.val().opponent);
-    });
+  fbuser.child('battleRequests').on('child_added', function(snapshot) {
+    if (snapshot.val().direction == 'incoming')
+      incomingRequest(snapshot.val().opponent);
+  });
   // Handle updated battle request
   fbuser.child('battleRequests').on('child_changed', function(snapshot) {
-    incomingRequest(snapshot.val().opponent);
+    if (snapshot.val().status == 'accepted')
+      enterBattle(snapshot.val().opponent);
+    if (snapshot.val().direction == 'incoming')
+      incomingRequest(snapshot.val().opponent);
   });
 }
 
