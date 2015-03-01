@@ -247,6 +247,29 @@ void send_poke(char* poke) {
   app_message_outbox_send();
 }
 
+void send_connect(int status) {
+  DictionaryIterator* outbox_iter;
+  
+  if(app_message_outbox_begin(&outbox_iter) != APP_MSG_OK) {
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "opening outbox failed\n");
+    return;
+  }
+  
+  dict_write_uint8(outbox_iter, KEY_OP_CODE, 0);
+  dict_write_uint8(outbox_iter, KEY_OP_DATA, status);
+  
+  if(outbox_iter == NULL) {
+    return;
+  }
+  
+  if (dict_write_end(outbox_iter) == 0) {
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "the parameters for writing were invalid");
+  }
+  app_message_outbox_send();
+}
+
+
+
 
 void app_message_init() {
   app_message_register_inbox_received(inbox_recieved_callback);
