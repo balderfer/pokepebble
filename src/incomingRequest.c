@@ -44,10 +44,11 @@ static void window_load(Window *window) {
   text_layer = text_layer_create(GRect(0, 65, 144, 50));
   text_layer_set_background_color(text_layer, GColorClear);
   text_layer_set_text_color(text_layer, GColorBlack);
-  text_layer_set_font(name_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14));
-  text_layer_set_text(name_layer, "wants to battle!");
-
+  text_layer_set_font(text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14));
+  text_layer_set_text(text_layer, "wants to battle!");
+  
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(name_layer));
+  layer_add_child(window_get_root_layer(window), text_layer_get_layer(text_layer));
 }
 
 static void window_unload(Window *window) {
