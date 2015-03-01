@@ -1,5 +1,6 @@
 // All communication between the c and javascript
 #include "common.h"
+#include "png.h"
 
 int num_of_party = 0;
 char moves[4][16];
@@ -15,19 +16,24 @@ char game_text[256];
 int health_1;
 int health_2;
 char incoming_request[16];
+char* buffer;
 
+GBitmap *sprite_1_bitmap;
+GBitmap *sprite_2_bitmap;
 extern Layer * canvas_layer;
 extern TextLayer* name1_layer;
 extern TextLayer* name2_layer;
 extern TextLayer* status1_layer;
 extern TextLayer* status2_layer;
-
+extern BitmapLayer *sprite1_layer;
+extern BitmapLayer *sprite2_layer;
 
   
 //declare the stuff to see the text layers and the buffers? / arrays?
   
 static void inbox_recieved_callback(DictionaryIterator *iterator, void *context) {
   APP_LOG  (APP_LOG_LEVEL_INFO, "Message recieved!");
+  
   
   Tuple *t = dict_read_first(iterator);
   
@@ -62,15 +68,21 @@ static void inbox_recieved_callback(DictionaryIterator *iterator, void *context)
         strcpy(status_2, t->value->cstring);
         text_layer_set_text(status2_layer, status_2);
         break;
-        // TODO: Sprites
-//       case KEY_SPRITE_1:
-//         APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %s", t->value->cstring);
-//         snprintf(apps[6], sizeof(apps[6]), t->value->cstring);
-//         break;
-//       case KEY_SPRITE_2:
-//         APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %s", t->value->cstring);
-//         snprintf(apps[7], sizeof(apps[7]), t->value->cstring);
-//         break;
+      case KEY_SPRITE_1:
+        APP_LOG(APP_LOG_LEVEL_INFO, "SPRITE received! %d", t->length);
+        buffer = malloc(t->length);
+        memcpy(buffer, t->value->data, t->length);
+        gbitmap_destroy(sprite_1_bitmap);
+        sprite_1_bitmap = gbitmap_create_with_png_data((uint8_t*)buffer, t->length);
+        bitmap_layer_set_bitmap(sprite1_layer, sprite_1_bitmap);
+        break;
+      case KEY_SPRITE_2:
+        buffer = malloc(t->length);
+        memcpy(buffer, t->value->data, t->length);
+        gbitmap_destroy(sprite_2_bitmap);
+        sprite_2_bitmap = gbitmap_create_with_png_data((uint8_t*)buffer, t->length);
+        bitmap_layer_set_bitmap(sprite2_layer, sprite_2_bitmap);
+        break;
       case KEY_IN_GAME_TEXT:
         APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %s", t->value->cstring);
         strcpy(game_text, t->value->cstring);
@@ -149,8 +161,10 @@ static void inbox_recieved_callback(DictionaryIterator *iterator, void *context)
         break;
       case KEY_VIEW_USERS:
         APP_LOG(APP_LOG_LEVEL_INFO, "View Users Message received! %d", t->value->int16);
-        if(t->value->int16 == 1)
+        if(t->value->int16 == 1) {
+          window_stack_pop(true);
           trainer_menu_init();
+        }
         else
           trainer_menu_update();
         break;
@@ -309,6 +323,7 @@ void app_message_init() {
   app_message_register_outbox_sent(outbox_sent_callback);
   
   app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
+  app_comm_set_sniff_interval(SNIFF_INTERVAL_REDUCED);
   APP_LOG  (APP_LOG_LEVEL_INFO, "INIT APP MESSAGES");
   
 }

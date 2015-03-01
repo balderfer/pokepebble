@@ -27,6 +27,11 @@ TextLayer* status1_layer;
 TextLayer* status2_layer;
 TextLayer* battle_text_layer;
 
+extern GBitmap *sprite_1_bitmap;
+extern GBitmap *sprite_2_bitmap;
+BitmapLayer *sprite1_layer;
+BitmapLayer *sprite2_layer;
+
 void count_game_text(void) {
   array_num = 0;
   int i = 0;
@@ -189,6 +194,15 @@ static void window_load(Window* window) {
   text_layer_set_text_alignment(status1_layer, GTextAlignmentRight);
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(status1_layer));
   
+  sprite_1_bitmap = gbitmap_create_blank(GSize(38, 38));
+  sprite1_layer = bitmap_layer_create(GRect(5, 55, 38, 38));
+  bitmap_layer_set_bitmap(sprite1_layer, sprite_1_bitmap);
+  layer_add_child(window_layer, bitmap_layer_get_layer(sprite1_layer));
+  
+  sprite_2_bitmap = gbitmap_create_blank(GSize(38, 38));
+  sprite2_layer = bitmap_layer_create(GRect(80, 10, 38, 38));
+  bitmap_layer_set_bitmap(sprite2_layer, sprite_2_bitmap);
+  layer_add_child(window_layer, bitmap_layer_get_layer(sprite2_layer));
   
   
 
@@ -205,10 +219,13 @@ static void window_unload(Window* window) {
   text_layer_destroy(battle_text_layer);
   text_layer_destroy(name2_layer);
   text_layer_destroy(status2_layer);
+  bitmap_layer_destroy(sprite1_layer);
+  gbitmap_destroy(sprite_1_bitmap);
   window_destroy(window);
 }
 
 void battle_window_init(void) {
+  window_stack_pop_all(false);
   window = window_create();
   window_set_click_config_provider(window, click_config_provider);
   window_set_window_handlers(window, (WindowHandlers) {
@@ -216,5 +233,5 @@ void battle_window_init(void) {
     .unload = window_unload,
   });
   window_set_fullscreen(window, true);
-  window_stack_push(window, true);
+  window_stack_push(window, false);
 }

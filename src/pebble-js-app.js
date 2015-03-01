@@ -254,6 +254,8 @@ function Rc(a,b){J(!b||!0===a||!1===a,"Can't turn on custom loggers persistently
 var fb;
 var fbuser;
 var userId;
+var onlineUserListLock;
+var onlineUserListener;
 
 var locationOptions = {
   enableHighAccuracy: true, 
@@ -308,7 +310,13 @@ Pebble.addEventListener('appmessage', function(msg) {
   console.log('code:data -- ' + code + ':' + data);
   switch(code) {
     case 0:
-      acceptBattle(data);
+      if (data != null) {
+        console.log('data = ' + data);
+        acceptBattle(data);
+      }
+      else {
+        // TODO disconnect battle
+      }
       break;
     case 1:
       challengeOpponent(data);
@@ -327,29 +335,7 @@ Pebble.addEventListener('appmessage', function(msg) {
 
 
 
-var sendDummyData = function() {
-  var example_text = 'Bulbasaur used Poisonpowder!\nCharmander used flamethrower\nIt\'s super effective!';
-  Pebble.sendAppMessage({
-    'Name_1': 'Bulbasaur',
-    'Name_2': 'Charmander',
-    'Health_1': 75,
-    'Health_2': 25,
-    'Status_1': 'BRN',
-    'Status_2': 'PSN',
-    'In_Game_Text': example_text,
-    'Move_1': 'Poisonpowder',
-    'Move_2': 'Razor Leaf',
-    'Move_3': 'Solar Beam',
-    'Move_4': 'Leech Seed',
-    'Poke_1': 'Alakazam',
-    'Poke_2': 'Mewtwo',
-    'Poke_3': 'Gengar',
-    'Poke_4': 'Slowbro',
-    'Poke_5': 'Kangaskhan',
-    'Num_Of_Party': 5    
-  });
-  
-};
+
 
 
 
@@ -383,24 +369,33 @@ var setOffline = function() {
 // Get the current users online
 var getUsersOnline = function() {
   fb.child('usersOnline').on('value', function(snapshot) {
-    var hash = formatOnlineUsers(snapshot.val());
-    trainerArrayToPebbleHash(hash, function(trainers) {
-      console.log('trainers' + JSON.stringify(trainers));
+      var hash = formatOnlineUsers(snapshot.val());
+      trainerArrayToPebbleHash(hash, function(trainers) {
+        console.log('trainers' + JSON.stringify(trainers));
 
-      // TODO format however they want and return
-      Pebble.sendAppMessage(trainers, function(){
-        console.log('Successfully sent the trainers!');
-        if (hash.length > 5) {
-          var length = 5;
-        } else var length = hash.length;
-        Pebble.sendAppMessage({
-          'Num_Of_Trainers': length,
-          'View_Incoming': 1
+        // TODO format however they want and return
+        Pebble.sendAppMessage(trainers, function() {
+          console.log('Successfully sent the trainers!');
+          if (hash.length > 5) {
+            var length = 5;
+          } else var length = hash.length;
+          Pebble.sendAppMessage({'Num_Of_Trainers': length}, function() {
+            if (!onlineUserListLock) {
+              console.log('init list view ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
+              Pebble.sendAppMessage({'View_Users': 1});
+              onlineUserListLock = true;
+            }
+            else {
+              if (battlelock) {
+                console.log('update list view ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
+                Pebble.sendAppMessage({'View_Users': 2});
+              }
+            }
+          });
         });
       }, function() {
-            console.log('Didn\'t send the trainers!');
+        console.log('Didn\'t send the trainers!');
       });
-    });
   });
 };
 
@@ -408,6 +403,7 @@ var formatOnlineUsers = function(users) {
   var userArray = [];
   var count = 0;
   for (var key in users) {
+    console.log(key);
     userArray.push({
       name: key,
       pos: users[key].pos
@@ -448,19 +444,21 @@ var calcDist = function(pos1, pos2) {
 }
 
 var challengeOpponent = function(username) {
-    var date = new Date();
-    fbuser.child('battleRequest').update({
-      direction: 'outgoing',
-      status: 'pending',
-      opponent: username,
-      time: date
-    });
-    fb.child('users').child(username).child('battleRequest').update({
-      direction: 'incoming',
-      status: 'pending',
-      opponent: uniqueUsername,
-      time: date
-    });
+  fb.child('usersOnline').off();
+
+  var date = new Date();
+  fbuser.child('battleRequest').update({
+    direction: 'outgoing',
+    status: 'pending',
+    opponent: username,
+    time: date
+  });
+  fb.child('users').child(username).child('battleRequest').update({
+    direction: 'incoming',
+    status: 'pending',
+    opponent: uniqueUsername,
+    time: date
+  });
 };
 
 var incomingRequest = function(opp) {
@@ -479,19 +477,98 @@ var acceptBattle = function(cha) {
     status: 'battling'
   });
 
+
   var battleId = newBattle.key();
   fbuser.child('currentBattle').set(battleId);
-  battleHandler(newBattle);
+  fbuser.child('battleRequest').set(null);
+  fb.child('usersOnline').child(userId).set(null);
   fb.child('users').child(cha).child('currentBattle').set(battleId);
+  fb.child('users').child(cha).child('battleRequest').set(null);
+  fb.child('usersOnline').child(cha).set(null);
+  
+  // battleHandler(newBattle);
 }
 
 var battleHandler = function(data) {
-  console.log(data);
+  console.log('BATTLE HANDLER' + data);
   // Todo send data instead of 1
+
+  if (1) {
+    sendBattleData();
+  }
+
+  
+}
+
+function convert(url, success) {
+  url = "http://ec2-54-191-195-212.us-west-2.compute.amazonaws.com/api?image=" + url + "&size=38x38&format=png";
+  var request = new XMLHttpRequest();
+  request.open("GET", url, true);
+  request.responseType = "arraybuffer";
+  request.onload = function(e) {
+    var buffer = request.response;
+    if(request.status == 200 && buffer) {
+      var bytes = new Uint8Array(buffer);
+      var array = [];
+      for(var i = 0; i < bytes.byteLength; i++) {
+        array.push(bytes[i]);
+      }
+      success(array);
+    }
+  }
+  request.send(null);
+};
+
+var sendBattleData = function() {
+  console.log('send data');
+  var poke_name_1 = 'bulbasaur';
+  var poke_name_2 = 'charmander';
+  var example_text = 'Bulbasaur used Poisonpowder!\nCharmander used flamethrower\nIt\'s super effective!';
   Pebble.sendAppMessage({
     'Start_Battle': 1
+  }, function() {
+    var url1 = "http://shanedewael.github.io/pokemon-sprites/pokesprites/" + poke_name_1 + "-back.png";
+    var url2 = "http://shanedewael.github.io/pokemon-sprites/pokesprites/" + poke_name_2 + "-front.png";
+    convert(url1, function(bytes1) {
+      convert(url2, function(bytes2) {
+        Pebble.sendAppMessage({
+          "Sprite_1": bytes1,
+          "Sprite_2": bytes2
+        }, function() {
+          Pebble.sendAppMessage({
+            'Name_1': poke_name_1,
+            'Name_2': poke_name_2,
+            'Health_1': 75,
+            'Health_2': 25,
+            'Status_1': 'BRN',
+            'Status_2': 'PSN',
+            'In_Game_Text': example_text,
+            'Move_1': 'Poisonpowder',
+            'Move_2': 'Razor Leaf',
+            'Move_3': 'Solar Beam',
+            'Move_4': 'Leech Seed',
+            'Poke_1': 'Alakazam',
+            'Poke_2': 'Mewtwo',
+            'Poke_3': 'Gengar',
+            'Poke_4': 'Slowbro',
+            'Poke_5': 'Kangaskhan',
+            'Num_Of_Party': 5    
+          });
+       });
+      });
+    });
   });
-}
+};
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -501,8 +578,11 @@ var battleHandler = function(data) {
 var fbListeners = function() {
   // Handle updated battle request
   fbuser.child('battleRequest').on('value', function(snapshot) {
-    if (snapshot.val().status == 'accepted')
-      enterBattle(snapshot.val().opponent);
+    if (!snapshot.val()) {
+      console.log('request deleted');
+    }
+    // else if (snapshot.val().status == 'accepted')
+      // enterBattle(snapshot.val().opponent);
     else if (snapshot.val().direction == 'incoming')
       incomingRequest(snapshot.val().opponent);
   });
@@ -522,5 +602,6 @@ Pebble.addEventListener("ready", function() {
     console.log("PokePebble js is ready");
     Firebase.INTERNAL.forceWebSockets();
     fb = new Firebase('https://pokepebble.firebaseio.com/');
+    onlineUserListLock = false;
 });
 
