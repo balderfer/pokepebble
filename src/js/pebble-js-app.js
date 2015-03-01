@@ -252,8 +252,6 @@ U.prototype.Me=function(a,b){x("Firebase.resetPassword",2,2,arguments.length);V(
 function Rc(a,b){J(!b||!0===a||!1===a,"Can't turn on custom loggers persistently.");!0===a?("undefined"!==typeof console&&("function"===typeof console.log?yb=q(console.log,console):"object"===typeof console.log&&(yb=function(a){console.log(a)})),b&&P.set("logging_enabled",!0)):a?yb=a:(yb=null,P.remove("logging_enabled"))}U.enableLogging=Rc;U.ServerValue={TIMESTAMP:{".sv":"timestamp"}};U.SDK_VERSION="2.2.1";U.INTERNAL=W;U.Context=Wh;U.TEST_ACCESS=Z;})();
 
 var fb;
-var fbuser;
-var uniqueUsername;
 
 var locationOptions = {
   enableHighAccuracy: true, 
@@ -278,20 +276,6 @@ var fireGet = function(uniqueId){
   console.log('fireget - ' + uniqueId);
 };
 
-// var getAndSetUniqueId = function(username, callback){
-  // if (typeof(config_str) !== 'undefined'){
-    // console.log('getAndSetUniqueId: ' + JSON.stringify(config));
-//     var uniqueId = config["unique-id"];
-//     console.log(uniqueId);
-  // uniqueUsername = username;
-  //   callback(username);
-//     return;
-//   } else {
-//     Pebble.showSimpleNotificationOnPebble("Woah there!",
-//         "You need to set your User ID in the Pebble app");
-  // }
-// };
-
 Pebble.addEventListener("showConfiguration", function (e) {
   var url = "http://benalderfer.com/pokepebble-config/";
   Pebble.openURL(url);
@@ -313,20 +297,22 @@ Pebble.addEventListener('webviewclosed', function(e) {
 });
 
 Pebble.addEventListener('appmessage', function(msg) {
-    var payload = msg['payload'];
-    var code = payload['Op_Code'];
-    var data = payload['Op_Data'];
-    console.log('code:data -- ' + code + ':' + data);
-    switch(code) {
-        case 0:
+  var payload = msg['payload'];
+  var code = payload['Op_Code'];
+  var data = payload['Op_Data'];
+  console.log('code:data -- ' + code + ':' + data);
+  switch(code) {
+    case 0:
 
-            break;
-        case 1:
-            challengeOpponent(data);
-            break;
-    }
-
+      break;
+    case 1:
+      challengeOpponent(data);
+      break;
+  }
 });
+
+
+
 
 
 // Useful functions

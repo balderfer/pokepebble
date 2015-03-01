@@ -252,8 +252,6 @@ U.prototype.Me=function(a,b){x("Firebase.resetPassword",2,2,arguments.length);V(
 function Rc(a,b){J(!b||!0===a||!1===a,"Can't turn on custom loggers persistently.");!0===a?("undefined"!==typeof console&&("function"===typeof console.log?yb=q(console.log,console):"object"===typeof console.log&&(yb=function(a){console.log(a)})),b&&P.set("logging_enabled",!0)):a?yb=a:(yb=null,P.remove("logging_enabled"))}U.enableLogging=Rc;U.ServerValue={TIMESTAMP:{".sv":"timestamp"}};U.SDK_VERSION="2.2.1";U.INTERNAL=W;U.Context=Wh;U.TEST_ACCESS=Z;})();
 
 var fb;
-var fbuser;
-var uniqueUsername;
 
 var locationOptions = {
   enableHighAccuracy: true, 
@@ -278,20 +276,6 @@ var fireGet = function(uniqueId){
   console.log('fireget - ' + uniqueId);
 };
 
-// var getAndSetUniqueId = function(username, callback){
-  // if (typeof(config_str) !== 'undefined'){
-    // console.log('getAndSetUniqueId: ' + JSON.stringify(config));
-//     var uniqueId = config["unique-id"];
-//     console.log(uniqueId);
-  // uniqueUsername = username;
-  //   callback(username);
-//     return;
-//   } else {
-//     Pebble.showSimpleNotificationOnPebble("Woah there!",
-//         "You need to set your User ID in the Pebble app");
-  // }
-// };
-
 Pebble.addEventListener("showConfiguration", function (e) {
   var url = "http://benalderfer.com/pokepebble-config/";
   Pebble.openURL(url);
@@ -307,24 +291,28 @@ Pebble.addEventListener('webviewclosed', function(e) {
   uniqueUsername = username;
   fireGet(username);
   setOnline(username);
+  getUsersOnline();
   fbListeners();
+  Pebble.sendAppMessage({'View_Incoming': 1});
 });
 
 Pebble.addEventListener('appmessage', function(msg) {
-    var payload = msg['payload'];
-    var code = payload['Op_Code'];
-    var data = payload['Op_Data'];
-    console.log('code:data -- ' + code + ':' + data);
-    switch(code) {
-        case 0:
+  var payload = msg['payload'];
+  var code = payload['Op_Code'];
+  var data = payload['Op_Data'];
+  console.log('code:data -- ' + code + ':' + data);
+  switch(code) {
+    case 0:
 
-            break;
-        case 1:
-            challengeOpponent(data);
-            break;
-    }
-
+      break;
+    case 1:
+      challengeOpponent(data);
+      break;
+  }
 });
+
+
+
 
 
 // Useful functions
@@ -353,18 +341,19 @@ var setOffline = function(username) {
 var getUsersOnline = function() {
   fb.child('usersOnline').on('value', function(snapshot) {
     var hash = formatOnlineUsers(snapshot.val());
-    var trainers = trainerArrayToPebbleHash(hash);
-    console.log('trainers' + JSON.stringify(trainers));
+    trainerArrayToPebbleHash(hash, function(trainers) {
+      console.log('trainers' + JSON.stringify(trainers));
 
-    // TODO format however they want and return
-    Pebble.sendAppMessage(trainers, function(){
-          console.log('Successfully sent the trainers!');
-      if (hash.length > 5) {
-        var length = 5;
-      } else var length = hash.length;
-      Pebble.sendAppMessage({'Num_Of_Trainers': length});
-    }, function() {
-          console.log('Didn\'t send the trainers!');
+      // TODO format however they want and return
+      Pebble.sendAppMessage(trainers, function(){
+            console.log('Successfully sent the trainers!');
+        if (hash.length > 5) {
+          var length = 5;
+        } else var length = hash.length;
+        Pebble.sendAppMessage({'Num_Of_Trainers': length});
+      }, function() {
+            console.log('Didn\'t send the trainers!');
+      });
     });
   });
 };
@@ -382,25 +371,32 @@ var formatOnlineUsers = function(users) {
 };
 
 // Trainer hash
-var trainerArrayToPebbleHash = function(array) {
+var trainerArrayToPebbleHash = function(array, callback) {
   hash = {};
   console.log('test');
   // Sort by location
   navigator.geolocation.getCurrentPosition(function(pos) {
-
-    console.log(array[i].name);
-    console.log(array[i].pos.latitude);
-
-
-
+    for(var i = 1; i < array.length - 1; i++) {
+      var j = i;
+      while (j > 0 && calcDist(pos, array[j-1].pos) < calcDist(pos, array[j].pos)) {
+        var temp = array[j];
+        array[j] = array[j-1];
+        array[j-1] = temp;
+        j--;
+      }
+    }
 
     for(var i = 0; i < array.length && i < 5; i++) {
       var key = 'Trainer_' + (i+1);
       hash[key] = array[i].name;
     }
-    return hash;
+    callback(hash);
   }, locationError, locationOptions);
 };
+
+var calcDist = function(pos1, pos2) {
+  return Math.sqrt(Math.pow(pos1.latitude - pos2.latitude, 2) + Math.pow(pos1.longitude - pos2.longitude));
+}
 
 var challengeOpponent = function(username) {
     var date = new Date();
