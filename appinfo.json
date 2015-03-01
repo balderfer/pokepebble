@@ -38,21 +38,14 @@
     "longName": "PokePebble",
     "projectType": "native",
     "resources": {
-        "media": [
-            {
-                "file": "images/check.png",
-                "name": "IMAGE_CHECK_ICON",
-                "type": "png"
-            },
-            {
-                "file": "images/cross.png",
-                "name": "IMAGE_CROSS_ICON",
-                "type": "png"
-            }
-        ]
+        "media": []
     },
-    "sdkVersion": "2",
+    "sdkVersion": "3",
     "shortName": "PokePebble",
+    "targetPlatforms": [
+        "aplite",
+        "basalt"
+    ],
     "uuid": "448f5b51-26a3-4e11-9dd1-781e3af9e0fd",
     "versionCode": 1,
     "versionLabel": "1.0",
