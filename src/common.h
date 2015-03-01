@@ -10,6 +10,7 @@ void count_game_text(void);
 // appMsg.c
 void app_message_init(void);
 void send_challenge(char* trainer);
+void send_connect(int status);
 // void fetch_battle_menu(int option);
 void send_move(char* move);
 void send_poke(char* poke);

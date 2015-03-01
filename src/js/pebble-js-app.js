@@ -308,7 +308,14 @@ Pebble.addEventListener('appmessage', function(msg) {
   console.log('code:data -- ' + code + ':' + data);
   switch(code) {
     case 0:
-      acceptBattle(data);
+      if (data) {
+        fbuser.child('battleRequest').on('value', function(snapshot) {
+          acceptBattle(snapshot.val().opponent);
+        });
+      }
+      else {
+        // TODO disconnect battle
+      }
       break;
     case 1:
       challengeOpponent(data);
@@ -317,6 +324,20 @@ Pebble.addEventListener('appmessage', function(msg) {
       setOffline();
   }
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -445,17 +466,64 @@ var acceptBattle = function(cha) {
 
   var battleId = newBattle.key();
   fbuser.child('currentBattle').set(battleId);
-  battleHandler(newBattle);
+  fbuser.child('battleRequest').set(null);
+  fb.child('usersOnline').child(userId).set(null);
   fb.child('users').child(cha).child('currentBattle').set(battleId);
+  fb.child('users').child(cha).child('battleRequest').set(null);
+  fb.child('usersOnline').child(cha).set(null);
+  
+  // battleHandler(newBattle);
 }
 
 var battleHandler = function(data) {
   console.log(data);
   // Todo send data instead of 1
+  var lock = false;
+
+  if (!lock) {
+    sendBattleData();
+    lock = true;
+  }
+
+  
+}
+
+var sendBattleData = function() {
+  var example_text = 'Bulbasaur used Poisonpowder!\nCharmander used flamethrower\nIt\'s super effective!';
   Pebble.sendAppMessage({
     'Start_Battle': 1
+  }, function() {
+    Pebble.sendAppMessage({
+      'Name_1': 'Bulbasaur',
+      'Name_2': 'Charmander',
+      'Health_1': 75,
+      'Health_2': 25,
+      'Status_1': 'BRN',
+      'Status_2': 'PSN',
+      'In_Game_Text': example_text,
+      'Move_1': 'Poisonpowder',
+      'Move_2': 'Razor Leaf',
+      'Move_3': 'Solar Beam',
+      'Move_4': 'Leech Seed',
+      'Poke_1': 'Alakazam',
+      'Poke_2': 'Mewtwo',
+      'Poke_3': 'Gengar',
+      'Poke_4': 'Slowbro',
+      'Poke_5': 'Kangaskhan',
+      'Num_Of_Party': 5    
+    });
   });
 }
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -465,7 +533,10 @@ var battleHandler = function(data) {
 var fbListeners = function() {
   // Handle updated battle request
   fbuser.child('battleRequest').on('value', function(snapshot) {
-    if (snapshot.val().status == 'accepted')
+    if (!snapshot.val()) {
+      console.log('request deleted');
+    }
+    else if (snapshot.val().status == 'accepted')
       enterBattle(snapshot.val().opponent);
     else if (snapshot.val().direction == 'incoming')
       incomingRequest(snapshot.val().opponent);

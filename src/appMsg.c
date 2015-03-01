@@ -250,7 +250,7 @@ void send_poke(char* poke) {
   app_message_outbox_send();
 }
 
-void accept_request(char* name) {
+void send_connect(int status) {
   DictionaryIterator* outbox_iter;
   
   if(app_message_outbox_begin(&outbox_iter) != APP_MSG_OK) {
@@ -259,8 +259,7 @@ void accept_request(char* name) {
   }
   
   dict_write_uint8(outbox_iter, KEY_OP_CODE, 0);
-  
-  dict_write_cstring(outbox_iter, KEY_OP_DATA, name);
+  dict_write_uint8(outbox_iter, KEY_OP_DATA, status);
   
   if(outbox_iter == NULL) {
     return;
@@ -293,6 +292,7 @@ void set_offline(void) {
   }
   app_message_outbox_send();
 }
+
 
 void app_message_init() {
   app_message_register_inbox_received(inbox_recieved_callback);
