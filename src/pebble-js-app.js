@@ -519,10 +519,19 @@ function convert(url, success) {
   request.send(null);
 };
 
+function calculateDamage(health, p2_level) {
+  //Part of formula to calculate damage
+  //var random = Math.floor(Math.random() * ((255-217)+1) + 217);
+  //return health - (((((2(p2_level)/5+2)/50)+2)/10)*(random))/255;
+  return Math.floor(Math.random() * ((35-15)+1) + 15);
+}
+
 var sendBattleData = function() {
   console.log('send data');
   var poke_name_1 = 'bulbasaur';
   var poke_name_2 = 'charmander';
+  var health_1 = 100;
+  var health_2 = 100;
   var example_text = 'Bulbasaur used Poisonpowder!\nCharmander used flamethrower\nIt\'s super effective!';
   Pebble.sendAppMessage({
     'Start_Battle': 1
@@ -538,8 +547,8 @@ var sendBattleData = function() {
           Pebble.sendAppMessage({
             'Name_1': poke_name_1,
             'Name_2': poke_name_2,
-            'Health_1': 75,
-            'Health_2': 25,
+            'Health_1': health_1,
+            'Health_2': health_2,
             'Status_1': 'BRN',
             'Status_2': 'PSN',
             'In_Game_Text': example_text,

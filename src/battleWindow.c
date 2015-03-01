@@ -156,7 +156,7 @@ static void window_load(Window* window) {
   layer_add_child(window_layer, canvas_layer);
   
   //Main text
-  battle_text_layer = text_layer_create(GRect(8, 120, 130, 42));
+  battle_text_layer = text_layer_create(GRect(10, 120, 128, 42));
   text_layer_set_background_color(battle_text_layer, GColorClear);
   text_layer_set_text_color(battle_text_layer, GColorBlack);
   text_layer_set_font(battle_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14));
@@ -194,18 +194,15 @@ static void window_load(Window* window) {
   text_layer_set_text_alignment(status1_layer, GTextAlignmentRight);
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(status1_layer));
   
-  sprite_1_bitmap = gbitmap_create_blank(GSize(32, 32));
-  sprite1_layer = bitmap_layer_create(GRect(5, 55, 32, 32));
+  sprite_1_bitmap = gbitmap_create_blank(GSize(38, 38));
+  sprite1_layer = bitmap_layer_create(GRect(13, 70, 38, 38));
   bitmap_layer_set_bitmap(sprite1_layer, sprite_1_bitmap);
   layer_add_child(window_layer, bitmap_layer_get_layer(sprite1_layer));
   
-  sprite_2_bitmap = gbitmap_create_blank(GSize(32, 32));
-  sprite2_layer = bitmap_layer_create(GRect(80, 10, 32, 32));
+  sprite_2_bitmap = gbitmap_create_blank(GSize(38, 38));
+  sprite2_layer = bitmap_layer_create(GRect(90, 15, 38, 38));
   bitmap_layer_set_bitmap(sprite2_layer, sprite_2_bitmap);
   layer_add_child(window_layer, bitmap_layer_get_layer(sprite2_layer));
-  
-  
-
   // Set the update_proc
   layer_set_update_proc(canvas_layer, canvas_update_proc);
   

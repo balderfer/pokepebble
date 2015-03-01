@@ -499,7 +499,7 @@ var acceptBattle = function(cha) {
 }
 
 function convert(url, success) {
-  url = "http://ec2-54-191-195-212.us-west-2.compute.amazonaws.com/api?image=" + url + "&size=32x32&format=png";
+  url = "http://ec2-54-191-195-212.us-west-2.compute.amazonaws.com/api?image=" + url + "&size=38x38&format=png";
   var request = new XMLHttpRequest();
   request.open("GET", url, true);
   request.responseType = "arraybuffer";
