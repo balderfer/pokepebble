@@ -39,18 +39,7 @@
     "longName": "PokePebble",
     "projectType": "native",
     "resources": {
-        "media": [
-            {
-                "file": "images/check.png",
-                "name": "IMAGE_CHECK_ICON",
-                "type": "png"
-            },
-            {
-                "file": "images/cross.png",
-                "name": "IMAGE_CROSS_ICON",
-                "type": "png"
-            }
-        ]
+        "media": []
     },
     "sdkVersion": "2",
     "shortName": "PokePebble",

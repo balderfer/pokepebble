@@ -102,7 +102,7 @@ static void init(void) {
   window_set_fullscreen(window, true);
   
   // Show the Window on the watc, with animated=true
-  window_stack_push(window, true);
+  window_stack_push(window, false);
 }
 
 static void deinit(void) {
