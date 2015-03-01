@@ -311,7 +311,29 @@ Pebble.addEventListener('appmessage', function(msg) {
   }
 });
 
-
+var sendDummyData = function() {
+  var example_text = 'Bulbasaur used Poisonpowder!\nCharmander used flamethrower\nIt\'s super effective!';
+  Pebble.sendAppMessage({
+    'Name_1': 'Bulbasaur',
+    'Name_2': 'Charmander',
+    'Health_1': 75,
+    'Health_2': 25,
+    'Status_1': 'BRN',
+    'Status_2': 'PSN',
+    'In_Game_Text': example_text,
+    'Move_1': 'Poisonpowder',
+    'Move_2': 'Razor Leaf',
+    'Move_3': 'Solar Beam',
+    'Move_4': 'Leech Seed',
+    'Poke_1': 'Alakazam',
+    'Poke_2': 'Mewtwo',
+    'Poke_3': 'Gengar',
+    'Poke_4': 'Slowbro',
+    'Poke_5': 'Kangaskhan',
+    'Num_Of_Party': 5    
+  });
+  
+};
 
 
 
