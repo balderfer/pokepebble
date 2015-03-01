@@ -21,7 +21,9 @@ void dynamic_menu_init(int option);
 
 // trainerMenu.c
 void trainer_menu_init(void);
-  
+
+// incomingRequest.c
+void incoming_request_init(void);
   
   
   
@@ -53,4 +55,6 @@ typedef enum {
   KEY_NUM_OF_TRAINERS = 0x18,
   KEY_OP_CODE = 0x19,
   KEY_OP_DATA = 0x1A,
+  KEY_R_INCOMING = 0x1B,
+  KEY_VIEW_USERS = 0x1C,
 } MessageKey;

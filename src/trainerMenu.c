@@ -10,7 +10,7 @@ static uint16_t menu_get_num_sections_callback(MenuLayer* menu_layer, void* data
 }
 
 static uint16_t menu_get_num_rows_callback(MenuLayer* menu_layer, uint16_t section_index, void* data) {
-  return num_of_trainers;;
+  return num_of_trainers;
 }
 
 static int16_t menu_get_header_height_callback(MenuLayer* menu_layer, uint16_t section_index, void* data) {

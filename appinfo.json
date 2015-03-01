@@ -1,5 +1,5 @@
 {
-	"appKeys": {
+    "appKeys": {
         "Health_1": 2,
         "Health_2": 3,
         "In_Game_Text": 8,
@@ -11,11 +11,14 @@
         "Name_2": 1,
         "Num_Of_Party": 18,
         "Num_Of_Trainers": 24,
+        "Op_Code": 25,
+        "Op_Data": 26,
         "Poke_1": 13,
         "Poke_2": 14,
         "Poke_3": 15,
         "Poke_4": 16,
         "Poke_5": 17,
+        "R_Incoming": 27,
         "Sprite_1": 6,
         "Sprite_2": 7,
         "Status_1": 4,
@@ -24,7 +27,8 @@
         "Trainer_2": 20,
         "Trainer_3": 21,
         "Trainer_4": 22,
-        "Trainer_5": 23
+        "Trainer_5": 23,
+        "View_Incoming": 28
     },
     "capabilities": [
         "location",

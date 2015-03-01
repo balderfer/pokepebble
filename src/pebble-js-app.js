@@ -273,7 +273,7 @@ var fireGet = function(uniqueId){
   Firebase.INTERNAL.forceWebSockets();
   fbuser = fb.child('users').child(uniqueId);
   fbuser.update({
-  	name: uniqueId
+    name: uniqueId
   });
   console.log('fireget - ' + uniqueId);
 };
@@ -311,18 +311,18 @@ Pebble.addEventListener('webviewclosed', function(e) {
 });
 
 Pebble.addEventListener('appmessage', function(msg) {
-	var payload = msg['payload'];
-	var code = payload['25'];
-	var data = payload['26'];
-	console.log('code:data -- ' + code + ':' + data);
-	switch(code) {
-		case 0:
+    var payload = msg['payload'];
+    var code = payload['Op_Code'];
+    var data = payload['Op_Data'];
+    console.log('code:data -- ' + code + ':' + data);
+    switch(code) {
+        case 0:
 
-			break;
-		case 1:
-			challengeOpponent(data);
-			break;
-	}
+            break;
+        case 1:
+            challengeOpponent(data);
+            break;
+    }
 
 });
 
@@ -353,18 +353,18 @@ var setOffline = function(username) {
 var getUsersOnline = function() {
   fb.child('usersOnline').on('value', function(snapshot) {
     var hash = formatOnlineUsers(snapshot.val());
-		var trainers = trainerArrayToPebbleHash(hash);
-	  console.log('trainers' + JSON.stringify(trainers));
+    var trainers = trainerArrayToPebbleHash(hash);
+    console.log('trainers' + JSON.stringify(trainers));
 
     // TODO format however they want and return
     Pebble.sendAppMessage(trainers, function(){
-		  console.log('Successfully sent the trainers!');
+          console.log('Successfully sent the trainers!');
       if (hash.length > 5) {
         var length = 5;
       } else var length = hash.length;
       Pebble.sendAppMessage({'Num_Of_Trainers': length});
     }, function() {
-		  console.log('Didn\'t send the trainers!');
+          console.log('Didn\'t send the trainers!');
     });
   });
 };
@@ -373,7 +373,10 @@ var formatOnlineUsers = function(users) {
   var userArray = [];
   var count = 0;
   for (var key in users) {
-		userArray.push(key);
+    userArray.push({
+      name: key,
+      pos: users[key].pos
+    });
   }
   return userArray;
 };
@@ -381,41 +384,62 @@ var formatOnlineUsers = function(users) {
 // Trainer hash
 var trainerArrayToPebbleHash = function(array) {
   hash = {};
-  for(var i = 0; i < array.length; i++) {
+  console.log('test');
+  // Sort by location
+  navigator.geolocation.getCurrentPosition(function(pos) {
+
+    console.log(array[i].name);
+    console.log(array[i].pos.latitude);
+
+
+
+
+    for(var i = 0; i < array.length && i < 5; i++) {
       var key = 'Trainer_' + (i+1);
-      hash[key] = array[i];
+      hash[key] = array[i].name;
     }
-  return hash;
+    return hash;
+  }, locationError, locationOptions);
 };
 
 var challengeOpponent = function(username) {
-	var date = new Date();
-	fbuser.child('battleRequests').child(username).update({
-		direction: 'outgoing',
-		status: 'pending',
-		time: date
-	});
-	fb.child('users').child(username).child('battleRequests').child(uniqueUsername).update({
-		direction: 'incoming',
-		status: 'pending',
-		time: date
-	});
+    var date = new Date();
+    fbuser.child('battleRequests').child(username).update({
+        direction: 'outgoing',
+        status: 'pending',
+    opponent: username,
+        time: date
+    });
+    fb.child('users').child(username).child('battleRequests').child(uniqueUsername).update({
+        direction: 'incoming',
+        status: 'pending',
+    opponent: uniqueUsername,
+        time: date
+    });
 };
+
+var incomingRequest = function(opp) {
+  Pebble.sendAppMessage({'R_Incoming': opp});
+}
+
+
+
+
+
 
 
 
 
 // Firebase listeners
 var fbListeners = function() {
-	// Listen for online users
-	// Handle new battle request
-	fbuser.child('battleRequests').on('child_added', function(snapshot) {
-		console.log('battle request: ' + JSON.stringify(snapshot.val()));
-	});
+    // Handle new battle request
+    fbuser.child('battleRequests').on('child_added', function(snapshot) {
+    incomingRequest(snapshot.val().opponent);
+    });
   // Handle updated battle request
   fbuser.child('battleRequests').on('child_changed', function(snapshot) {
-    console.log('updated battle request: ' + JSON.stringify(snapshot.val()));
-  })
+    incomingRequest(snapshot.val().opponent);
+  });
 }
 
 
@@ -423,9 +447,9 @@ var fbListeners = function() {
 
 
 Pebble.addEventListener("ready", function() {
-	console.log("PokePebble js is ready");
-	Firebase.INTERNAL.forceWebSockets();
-	fb = new Firebase('https://pokepebble.firebaseio.com/');
-	getUsersOnline();
+    console.log("PokePebble js is ready");
+    Firebase.INTERNAL.forceWebSockets();
+    fb = new Firebase('https://pokepebble.firebaseio.com/');
+    getUsersOnline();
 });
 

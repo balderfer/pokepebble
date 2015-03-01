@@ -11,6 +11,7 @@ char statuses[2][4];
 char game_text[256];
 int health1;
 int health2;
+char incoming_request[16];
 
 extern MenuLayer* battle_menu_layer;
 extern TextLayer* name1_layer;
@@ -129,6 +130,14 @@ static void inbox_recieved_callback(DictionaryIterator *iterator, void *context)
       case KEY_NUM_OF_TRAINERS:
         APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %d", t->value->int16);
         num_of_trainers = t->value->int16;
+        break;
+      case KEY_R_INCOMING:
+        APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %s", t->value->cstring);
+        strcpy(incoming_request, t->value->cstring);
+        incoming_request_init();
+        break;
+      case KEY_VIEW_USERS:
+        trainer_menu_init();
         break;
     }
     

@@ -5,8 +5,8 @@ static TextLayer *s_load_layer;
 
 
 static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
-  text_layer_set_text(s_load_layer, "Select pressed!");
-  trainer_menu_init();
+  // text_layer_set_text(s_load_layer, "Select pressed!");
+  // trainer_menu_init();
 }
 
 static void click_config_provider(void *context) {
@@ -18,7 +18,7 @@ static void window_load(Window *window) {
   s_load_layer = text_layer_create(GRect(0, 55, 144, 50));
   text_layer_set_background_color(s_load_layer, GColorClear);
   text_layer_set_text_color(s_load_layer, GColorBlack);
-  text_layer_set_text(s_load_layer, "Click to Connect");
+  text_layer_set_text(s_load_layer, "Login on your pebble to begin your adventure!");
   
    // Add it as a child layer to the Window's root layer
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_load_layer));
