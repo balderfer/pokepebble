@@ -529,8 +529,8 @@ var sendBattleData = function() {
         'Start_Battle': 1
       }, function() {
         Pebble.sendAppMessage({
-          'Name_1': myData.pokemon.name,
-          'Name_2': opData.pokemon.name,
+          'Name_1': myData.pokemon.name.toUpperCase(),
+          'Name_2': opData.pokemon.name.toUpperCase(),
           'Health_1': myData.pokemon.hp,
           'Health_2': opData.pokemon.hp,
           'Status_1': 'BRN',
