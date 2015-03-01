@@ -53,6 +53,7 @@ static void window_load(Window *window) {
   
    s_canvas_layer = layer_create(GRect(0, 0, window_bounds.size.w, window_bounds.size.h));
   layer_add_child(window_layer, s_canvas_layer);
+  
   //Main text
   start_text = text_layer_create(GRect(0, 130, 144, 30));
   text_layer_set_background_color(start_text, GColorClear);
@@ -83,6 +84,7 @@ static void window_unload(Window *window) {
 }
   
 static void init(void) {
+  
   app_message_init();
   // Create main Window element and assign to pointer
   window = window_create();
