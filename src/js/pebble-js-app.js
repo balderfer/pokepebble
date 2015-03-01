@@ -252,8 +252,6 @@ U.prototype.Me=function(a,b){x("Firebase.resetPassword",2,2,arguments.length);V(
 function Rc(a,b){J(!b||!0===a||!1===a,"Can't turn on custom loggers persistently.");!0===a?("undefined"!==typeof console&&("function"===typeof console.log?yb=q(console.log,console):"object"===typeof console.log&&(yb=function(a){console.log(a)})),b&&P.set("logging_enabled",!0)):a?yb=a:(yb=null,P.remove("logging_enabled"))}U.enableLogging=Rc;U.ServerValue={TIMESTAMP:{".sv":"timestamp"}};U.SDK_VERSION="2.2.1";U.INTERNAL=W;U.Context=Wh;U.TEST_ACCESS=Z;})();
 
 var fb;
-var fbuser;
-var uniqueUsername;
 
 var locationOptions = {
   enableHighAccuracy: true, 
@@ -271,60 +269,49 @@ function locationError(err) {
 
 var fireGet = function(uniqueId){
   Firebase.INTERNAL.forceWebSockets();
-  fbuser = fb.child('users').child(uniqueId);
-  fbuser.update({
-  	name: uniqueId
-  });
+  fb = new Firebase('https://pokepebble.firebaseio.com/');
   console.log('fireget - ' + uniqueId);
 };
 
-// var getAndSetUniqueId = function(username, callback){
-  // if (typeof(config_str) !== 'undefined'){
-    // console.log('getAndSetUniqueId: ' + JSON.stringify(config));
+var getAndSetUniqueId = function(callback){
+//   var config_str = window.localStorage.getItem('config');
+//   var config;
+//   if (typeof(config_str) !== 'undefined'){
+//     config = JSON.parse(config_str);
+//     console.log('getAndSetUniqueId: ' + JSON.stringify(config));
 //     var uniqueId = config["unique-id"];
 //     console.log(uniqueId);
-  // uniqueUsername = username;
-  //   callback(username);
+  var uniqueId = 'benji';
+    callback(uniqueId);
 //     return;
 //   } else {
 //     Pebble.showSimpleNotificationOnPebble("Woah there!",
 //         "You need to set your User ID in the Pebble app");
-  // }
-// };
+//   }
+};
 
 Pebble.addEventListener("showConfiguration", function (e) {
   var url = "http://benalderfer.com/pokepebble-config/";
   Pebble.openURL(url);
 });
 
-Pebble.addEventListener('webviewclosed', function(e) {
-  if (!e.response){
-    return;
-  }
-  var json = decodeURIComponent( e.response );
-  config = JSON.parse( json );
-  var username = config["unique-id"];
-  uniqueUsername = username;
-  fireGet(username);
-  setOnline(username);
-  fbListeners();
-});
+// Pebble.addEventListener('webviewclosed', function(e) {
+//   if (!e.response){
+//     return;
+//   }
+//   var json = decodeURIComponent( e.response );
+//   config = JSON.parse( json );
+//   var username = config["unique-id"];
+//   console.log("unique id is " + username);
 
-Pebble.addEventListener('appmessage', function(msg) {
-	var payload = msg['payload'];
-	var code = payload['25'];
-	var data = payload['26'];
-	console.log('code:data -- ' + code + ':' + data);
-	switch(code) {
-		case 0:
+//   window.localStorage.setItem( 'config', {'unique-id': 'benji:W'} );
+  
+//   setOnline(username);
+//   getUsersOnline();
+  
+//   getAndSetUniqueId(fireGet);
+// });
 
-			break;
-		case 1:
-			challengeOpponent(data);
-			break;
-	}
-
-});
 
 
 // Useful functions
@@ -357,15 +344,11 @@ var getUsersOnline = function() {
 	  console.log('trainers' + JSON.stringify(trainers));
 
     // TODO format however they want and return
-    Pebble.sendAppMessage(trainers, function(){
-		  console.log('Successfully sent the trainers!');
-      if (hash.length > 5) {
-        var length = 5;
-      } else var length = hash.length;
-      Pebble.sendAppMessage({'Num_Of_Trainers': length});
-    }, function() {
-		  console.log('Didn\'t send the trainers!');
-    });
+     Pebble.sendAppMessage(trainers, function(){
+			console.log('Successfully sent the trainers!');
+     }, function() {
+			console.log('Didn\'t send the trainers!');
+     });
   });
 };
 
@@ -388,44 +371,9 @@ var trainerArrayToPebbleHash = function(array) {
   return hash;
 };
 
-var challengeOpponent = function(username) {
-	var date = new Date();
-	fbuser.child('battleRequests').child(username).update({
-		direction: 'outgoing',
-		status: 'pending',
-		time: date
-	});
-	fb.child('users').child(username).child('battleRequests').child(uniqueUsername).update({
-		direction: 'incoming',
-		status: 'pending',
-		time: date
-	});
-};
-
-
-
-
-// Firebase listeners
-var fbListeners = function() {
-	// Listen for online users
-	// Handle new battle request
-	fbuser.child('battleRequests').on('child_added', function(snapshot) {
-		console.log('battle request: ' + JSON.stringify(snapshot.val()));
-	});
-  // Handle updated battle request
-  fbuser.child('battleRequests').on('child_changed', function(snapshot) {
-    console.log('updated battle request: ' + JSON.stringify(snapshot.val()));
-  })
-}
-
-
-
-
-
 Pebble.addEventListener("ready", function() {
-	console.log("PokePebble js is ready");
-	Firebase.INTERNAL.forceWebSockets();
-	fb = new Firebase('https://pokepebble.firebaseio.com/');
-	getUsersOnline();
+  console.log("PokePebble js is ready");
+  getAndSetUniqueId(fireGet);
+  getUsersOnline();
 });
 

@@ -31,7 +31,7 @@ static void menu_draw_row_callback(GContext* ctx, const Layer *cell_layer, MenuI
 static void menu_select_callback(MenuLayer* menu_layer, MenuIndex* cell_index, void* data) {
   APP_LOG  (APP_LOG_LEVEL_INFO, "MENU ITEM NUMBER: %d", cell_index->row);
   if(cell_index->row < 2) {
-    fetch_battle_menu(cell_index->row);
+//     fetch_battle_menu(cell_index->row);
     dynamic_menu_init(cell_index->row);
   }
   else{}

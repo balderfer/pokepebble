@@ -6,17 +6,21 @@ char moves[4][16];
 char party[5][16];
 char trainers[5][16];
 int num_of_trainers = 0;
-char names[2][16];
-char statuses[2][4];
-char game_text[256];
-int health1;
-int health2;
 
-extern MenuLayer* battle_menu_layer;
+char name_1[16];
+char name_2[16];
+char status_1[4];
+char status_2[4];
+char game_text[256];
+int health_1;
+int health_2;
+
+extern Layer * canvas_layer;
 extern TextLayer* name1_layer;
 extern TextLayer* name2_layer;
 extern TextLayer* status1_layer;
 extern TextLayer* status2_layer;
+
 
   
 //declare the stuff to see the text layers and the buffers? / arrays?
@@ -31,27 +35,31 @@ static void inbox_recieved_callback(DictionaryIterator *iterator, void *context)
     switch(t->key) {
       case KEY_NAME_1:
         APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %s", t->value->cstring);
-        snprintf(names[0], sizeof(names[0]), t->value->cstring);
+        strcpy(name_1, t->value->cstring);
+        text_layer_set_text(name1_layer, name_1);
         break;
       case KEY_NAME_2:
         APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %s", t->value->cstring);
-        snprintf(names[1], sizeof(names[1]), t->value->cstring);
+        strcpy(name_2, t->value->cstring);
+        text_layer_set_text(name2_layer, name_2);
         break;
       case KEY_HEALTH_1:
         APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %d", t->value->int16);
-        health1 = t->value->int16;
+        health_1 = t->value->int16;
         break;
       case KEY_HEALTH_2:
         APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %d", t->value->int16);
-        health2 = t->value->int16;
+        health_2 = t->value->int16;
         break;
       case KEY_STATUS_1:
         APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %s", t->value->cstring);
-        snprintf(statuses[0], sizeof(statuses[0]), t->value->cstring);
+        strcpy(status_1, t->value->cstring);
+        text_layer_set_text(status1_layer, status_1);
         break;
       case KEY_STATUS_2:
         APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %s", t->value->cstring);
-        snprintf(statuses[1], sizeof(statuses[1]), t->value->cstring);
+        strcpy(status_2, t->value->cstring);
+        text_layer_set_text(status2_layer, status_2);
         break;
         // TODO: Sprites
 //       case KEY_SPRITE_1:
@@ -64,7 +72,8 @@ static void inbox_recieved_callback(DictionaryIterator *iterator, void *context)
 //         break;
       case KEY_IN_GAME_TEXT:
         APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %s", t->value->cstring);
-        snprintf(game_text, sizeof(game_text), t->value->cstring);
+        strcpy(game_text, t->value->cstring);
+        count_game_text();
         break;
       case KEY_MOVE_1:
         APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %s", t->value->cstring);
@@ -105,6 +114,8 @@ static void inbox_recieved_callback(DictionaryIterator *iterator, void *context)
       case KEY_NUM_OF_PARTY:
         APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %d", t->value->int16);
         num_of_party = t->value->int16;
+        // TODO: CREATE RELOAD PROTOCOL
+        layer_mark_dirty(canvas_layer);
         break;
       case KEY_TRAINER_1:
         APP_LOG(APP_LOG_LEVEL_INFO, "Message received! %s", t->value->cstring);
@@ -184,10 +195,47 @@ void send_challenge(char* trainer) {
 
 void send_move(char* move) {
   APP_LOG(APP_LOG_LEVEL_INFO, "Trainer Name: %s", move);
+  DictionaryIterator* outbox_iter;
+  
+  if(app_message_outbox_begin(&outbox_iter) != APP_MSG_OK) {
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "opening outbox failed\n");
+    return;
+  }
+  
+  dict_write_uint8(outbox_iter, KEY_OP_CODE, 2);
+  
+  dict_write_cstring(outbox_iter, KEY_OP_DATA, move);
+  
+  if(outbox_iter == NULL) {
+    return;
+  }
+  
+  if (dict_write_end(outbox_iter) == 0) {
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "the parameters for writing were invalid");
+  }
+  app_message_outbox_send();
 }
 
 void send_poke(char* poke) {
-  APP_LOG(APP_LOG_LEVEL_INFO, "Trainer Name: %s", poke);
+  DictionaryIterator* outbox_iter;
+  
+  if(app_message_outbox_begin(&outbox_iter) != APP_MSG_OK) {
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "opening outbox failed\n");
+    return;
+  }
+  
+  dict_write_uint8(outbox_iter, KEY_OP_CODE, 3);
+  
+  dict_write_cstring(outbox_iter, KEY_OP_DATA, poke);
+  
+  if(outbox_iter == NULL) {
+    return;
+  }
+  
+  if (dict_write_end(outbox_iter) == 0) {
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "the parameters for writing were invalid");
+  }
+  app_message_outbox_send();
 }
 
 
