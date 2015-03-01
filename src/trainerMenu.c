@@ -55,6 +55,10 @@ static void window_unload(Window *window) {
   window_destroy(window);
 }
 
+void trainer_menu_update(void) {
+  menu_layer_reload_data(menu_layer);
+}
+
 void trainer_menu_init(void) {
   window = window_create();
   window_set_window_handlers(window, (WindowHandlers) {

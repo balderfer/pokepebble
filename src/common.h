@@ -10,7 +10,7 @@ void count_game_text(void);
 // appMsg.c
 void app_message_init(void);
 void send_challenge(char* trainer);
-void send_connect(int status);
+void send_connect(char* name);
 // void fetch_battle_menu(int option);
 void send_move(char* move);
 void send_poke(char* poke);
@@ -25,6 +25,7 @@ void dynamic_menu_init(int option);
 
 // trainerMenu.c
 void trainer_menu_init(void);
+void trainer_menu_update(void);
 
 // incomingRequest.c
 void incoming_request_init(void);

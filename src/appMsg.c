@@ -148,9 +148,14 @@ static void inbox_recieved_callback(DictionaryIterator *iterator, void *context)
         incoming_request_init();
         break;
       case KEY_VIEW_USERS:
-        trainer_menu_init();
+        APP_LOG(APP_LOG_LEVEL_INFO, "View Users Message received! %d", t->value->int16);
+        if(t->value->int16 == 1)
+          trainer_menu_init();
+        else
+          trainer_menu_update();
         break;
       case KEY_START_BATTLE:
+        APP_LOG(APP_LOG_LEVEL_INFO, "Start battle Message received! %d", t->value->int16);
         battle_window_init();
         break;
     }
@@ -250,7 +255,7 @@ void send_poke(char* poke) {
   app_message_outbox_send();
 }
 
-void send_connect(int status) {
+void send_connect(char* name) {
   DictionaryIterator* outbox_iter;
   
   if(app_message_outbox_begin(&outbox_iter) != APP_MSG_OK) {
@@ -259,7 +264,10 @@ void send_connect(int status) {
   }
   
   dict_write_uint8(outbox_iter, KEY_OP_CODE, 0);
-  dict_write_uint8(outbox_iter, KEY_OP_DATA, status);
+  if(name != NULL)
+    dict_write_cstring(outbox_iter, KEY_OP_DATA, name);
+  else
+    dict_write_cstring(outbox_iter, KEY_OP_DATA, NULL);
   
   if(outbox_iter == NULL) {
     return;

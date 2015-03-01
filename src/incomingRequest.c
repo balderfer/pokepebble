@@ -9,12 +9,12 @@ static GBitmap *check_icon, *cross_icon;
 extern char incoming_request[16];
 
 static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
-  send_connect(1);
+  send_connect(incoming_request);
   window_stack_pop(true);
 }
 
 static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
-  send_connect(0);
+  send_connect(NULL);
   window_stack_pop(true);
 }
 

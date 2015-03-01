@@ -29,7 +29,7 @@
         "Trainer_3": 21,
         "Trainer_4": 22,
         "Trainer_5": 23,
-        "View_Incoming": 28
+        "View_Users": 28
     },
     "capabilities": [
         "location",
