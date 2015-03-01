@@ -256,6 +256,8 @@ var fbuser;
 var userId;
 var onlineUserListLock;
 var onlineUserListener;
+var userObject;
+var battleData;
 
 var locationOptions = {
   enableHighAccuracy: true, 
@@ -271,16 +273,22 @@ function locationError(err) {
   console.log('location error (' + err.code + '): ' + err.message);
 };
 
-var fireGet = function(uniqueId){
+var fireGet = function(uniqueId, pokemon){
+  console.log('test, REMOVE FOR PROD ' + uniqueId + ' ' + pokemon);
+
   Firebase.INTERNAL.forceWebSockets();
   fbuser = fb.child('users').child(uniqueId);
-  fbuser.update({
-    name: uniqueId,
-    battleRequest: null,
-    currentBattle: null
+  fb.child('pokemon').child(pokemon).once('value', function(snapshot) {
+    userObject = {
+      name: uniqueId,
+      battleRequest: null,
+      currentBattle: null,
+      pokemon: snapshot.val()
+    }
+    fbuser.update(userObject);
+    userId = uniqueId;
+    console.log('fireget - ' + uniqueId);
   });
-  userId = uniqueId;
-  console.log('fireget - ' + uniqueId);
 };
 
 Pebble.addEventListener("showConfiguration", function (e) {
@@ -295,8 +303,12 @@ Pebble.addEventListener('webviewclosed', function(e) {
   var json = decodeURIComponent( e.response );
   config = JSON.parse( json );
   var username = config["unique-id"];
+  var mainPokemon = config["pokemon"];
+
+  window.localStorage.setItem('config', JSON.stringify(config));
+
   uniqueUsername = username;
-  fireGet(username);
+  fireGet(username, mainPokemon);
   setOnline(username, function() {
     getUsersOnline();
   });
@@ -467,25 +479,23 @@ var incomingRequest = function(opp) {
 
 var acceptBattle = function(cha) {
   // Initialize fb battles
-  var newBattle = fb.child('battles').push({
-    opponent: {
-      name: userId
-    },
-    challenger: {
-      name: cha
-    },
-    status: 'battling'
-  });
+  fb.child('users').child(cha).once('value', function(snapshot) {
+    battleData = {
+      opponent: userObject,
+      challenger: snapshot.val(),
+      status: 'battling'
+    };
+    var newBattle = fb.child('battles').push(battleData);
 
-
-  var battleId = newBattle.key();
-  fbuser.child('currentBattle').set(battleId);
-  fbuser.child('battleRequest').set(null);
-  fb.child('usersOnline').child(userId).set(null);
-  fb.child('users').child(cha).child('currentBattle').set(battleId);
-  fb.child('users').child(cha).child('battleRequest').set(null);
-  fb.child('usersOnline').child(cha).set(null);
+    var battleId = newBattle.key();
+    fbuser.child('currentBattle').set(battleId);
+    fbuser.child('battleRequest').set(null);
+    fb.child('usersOnline').child(userId).set(null);
+    fb.child('users').child(cha).child('currentBattle').set(battleId);
+    fb.child('users').child(cha).child('battleRequest').set(null);
+    fb.child('usersOnline').child(cha).set(null);
   
+  });
   // battleHandler(newBattle);
 }
 
@@ -502,28 +512,42 @@ var battleHandler = function(data) {
 
 var sendBattleData = function() {
   console.log('send data');
-  var example_text = 'Bulbasaur used Poisonpowder!\nCharmander used flamethrower\nIt\'s super effective!';
-  Pebble.sendAppMessage({
-    'Start_Battle': 1
-  }, function() {
-    Pebble.sendAppMessage({
-      'Name_1': 'Bulbasaur',
-      'Name_2': 'Charmander',
-      'Health_1': 75,
-      'Health_2': 25,
-      'Status_1': 'BRN',
-      'Status_2': 'PSN',
-      'In_Game_Text': example_text,
-      'Move_1': 'Poisonpowder',
-      'Move_2': 'Razor Leaf',
-      'Move_3': 'Solar Beam',
-      'Move_4': 'Leech Seed',
-      'Poke_1': 'Alakazam',
-      'Poke_2': 'Mewtwo',
-      'Poke_3': 'Gengar',
-      'Poke_4': 'Slowbro',
-      'Poke_5': 'Kangaskhan',
-      'Num_Of_Party': 5    
+
+  fbuser.child('currentBattle').once('value', function(battleId) {
+    fb.child('battles').child(battleId.val()).once('value', function(snapshot) {
+      if (snapshot.val().challenger.name != userObject.name) {
+        var opData = snapshot.val().challenger;
+        var myData = snapshot.val().opponent;
+      }
+      else {
+        var opData = snapshot.val().opponent;
+        var myData = snapshot.val().challenger;
+      }
+      
+      var example_text = 'Bulbasaur used Poisonpowder!\nCharmander used flamethrower\nIt\'s super effective!';
+      Pebble.sendAppMessage({
+        'Start_Battle': 1
+      }, function() {
+        Pebble.sendAppMessage({
+          'Name_1': myData.pokemon.name,
+          'Name_2': opData.pokemon.name,
+          'Health_1': myData.pokemon.hp,
+          'Health_2': opData.pokemon.hp,
+          'Status_1': 'BRN',
+          'Status_2': 'PSN',
+          'In_Game_Text': example_text,
+          'Move_1': 'Poisonpowder',
+          'Move_2': 'Razor Leaf',
+          'Move_3': 'Solar Beam',
+          'Move_4': 'Leech Seed',
+          'Poke_1': 'Alakazam',
+          'Poke_2': 'Mewtwo',
+          'Poke_3': 'Gengar',
+          'Poke_4': 'Slowbro',
+          'Poke_5': 'Kangaskhan',
+          'Num_Of_Party': 5    
+        });
+      });
     });
   });
 }
@@ -571,5 +595,19 @@ Pebble.addEventListener("ready", function() {
     Firebase.INTERNAL.forceWebSockets();
     fb = new Firebase('https://pokepebble.firebaseio.com/');
     onlineUserListLock = false;
+
+    var config_str = window.localStorage.getItem('config');
+
+    if (typeof(config_str) !== 'undefined') {
+      console.log('config_str ' + config_str);
+      var config = JSON.parse(config_str);
+      console.log('config ' + config);
+      fireGet(config['unique-id'], config['pokemon']);
+      uniqueUsername = config['unique-id'];
+      setOnline(config['unique-id'], function() {
+        getUsersOnline();
+      });
+      fbListeners();
+    }
 });
 
