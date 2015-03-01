@@ -44,14 +44,20 @@ void count_game_text(void) {
     c = game_text[++i];
   }
   game_text_buffer[array_num][j] = '\0';
+  array_num++;
   select_count = 0;
 }
 
 static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
   // TODO: Parse game_text via \n, set that to count. Everything time select is clicked, count goes down until 0, where battle_menu_init() is called.
+  if(drawn == true) {
+    select_count++;
+    drawn = false;
+  }
   if(select_count < array_num) {
     text_layer_set_text(battle_text_layer, game_text_buffer[select_count]);
-    select_count++;
+    APP_LOG(APP_LOG_LEVEL_INFO, "current buffer: %s", game_text_buffer[select_count]);
+    drawn = true;
     Layer *root = window_get_root_layer(window);
     layer_mark_dirty(root);
   }
@@ -67,81 +73,71 @@ static void click_config_provider(void *context) {
 
 static void canvas_update_proc(Layer *this_layer, GContext *ctx) {
 //   GRect bounds = layer_get_bounds(this_layer);
-  if(!drawn) {
-    //p2 
-    graphics_context_set_fill_color(ctx, GColorBlack);
-    graphics_fill_rect(ctx, GRect(9, 35, 2, 11), 0, GCornerNone);
-    graphics_fill_rect(ctx, GRect(9, 46, 70, 2), 0, GCornerNone);
-    graphics_fill_rect(ctx, GRect(13, 36, 66, 8), 0, GCornerNone);
-    graphics_context_set_fill_color(ctx, GColorWhite);
-    graphics_fill_rect(ctx, GRect(14, 37, 64, 6), 0, GCornerNone);
-    graphics_context_set_fill_color(ctx, GColorBlack);
-    //One after this is setting health bar, third element dictates health
-    graphics_fill_rect(ctx, GRect(14, 37, ((int)((16.0/25.0)*health_2)), 6), 0, GCornerNone);
-    
-    
-    
-    //p1
-    graphics_context_set_fill_color(ctx, GColorBlack);
-    graphics_fill_rect(ctx, GRect(135, 95, 2, 11), 0, GCornerNone);
-    graphics_fill_rect(ctx, GRect(67, 106, 70, 2), 0, GCornerNone);
-    graphics_fill_rect(ctx, GRect(67, 96, 66, 8), 0, GCornerNone);
-    graphics_context_set_fill_color(ctx, GColorWhite);
-    //For p1, heath bar decided by opposite width
-    graphics_fill_rect(ctx, GRect(68, 97, ((int)(64-((16.0/25.0)*health_1))), 6), 0, GCornerNone);
-    
-    graphics_context_set_stroke_color(ctx, GColorWhite);
-  
-    // Main boxes
-    graphics_context_set_fill_color(ctx, GColorBlack);
-    graphics_fill_rect(ctx, GRect(3, 115, 138, 51), 0, GCornerNone);
-    graphics_context_set_fill_color(ctx, GColorWhite);
-    graphics_fill_rect(ctx, GRect(4, 116, 136, 47), 0, GCornerNone);
-    graphics_context_set_fill_color(ctx, GColorBlack);
-    graphics_fill_rect(ctx, GRect(6, 118, 132, 43), 0, GCornerNone);
-    graphics_context_set_fill_color(ctx, GColorWhite);
-    graphics_fill_rect(ctx, GRect(7, 121, 130, 39), 0, GCornerNone);
-    
-    // Pokeballs
-    // Top left
-    graphics_context_set_fill_color(ctx, GColorBlack);
-    graphics_fill_circle(ctx, leftTop, 4);
-    graphics_context_set_fill_color(ctx, GColorWhite);
-    graphics_fill_circle(ctx, leftTop, 3);
-    graphics_context_set_fill_color(ctx, GColorBlack);
-    graphics_fill_rect(ctx, GRect(2, 114, 7, 3), 0, GCornerNone);
-    // Bottom left
-    graphics_context_set_fill_color(ctx, GColorBlack);
-    graphics_fill_circle(ctx, leftBottom, 4);
-    graphics_context_set_fill_color(ctx, GColorWhite);
-    graphics_fill_circle(ctx, leftBottom, 3);
-    graphics_context_set_fill_color(ctx, GColorBlack);
-    graphics_fill_rect(ctx, GRect(2, 159, 7, 3), 0, GCornerNone);
-    // Top right
-    graphics_context_set_fill_color(ctx, GColorBlack);
-    graphics_fill_circle(ctx, rightTop, 4);
-    graphics_context_set_fill_color(ctx, GColorWhite);
-    graphics_fill_circle(ctx, rightTop, 3);
-    graphics_context_set_fill_color(ctx, GColorBlack);
-    graphics_fill_rect(ctx, GRect(135, 114, 7, 3), 0, GCornerNone);
-    // Bottom right
-    graphics_context_set_fill_color(ctx, GColorBlack);
-    graphics_fill_circle(ctx, rightBottom, 4);
-    graphics_context_set_fill_color(ctx, GColorWhite);
-    graphics_fill_circle(ctx, rightBottom, 3);
-    graphics_context_set_fill_color(ctx, GColorBlack);
-    graphics_fill_rect(ctx, GRect(135, 159, 7, 3), 0, GCornerNone);
-    drawn = true;
-  }
-  else {
-    graphics_context_set_fill_color(ctx, GColorBlack);
-    //One after this is setting health bar, third element dictates health
-    graphics_fill_rect(ctx, GRect(14, 37, ((int)((16.0/25.0)*health_2)), 6), 0, GCornerNone);
-    
-    graphics_context_set_fill_color(ctx, GColorWhite);
-    //For p1, heath bar decided by opposite width
-    graphics_fill_rect(ctx, GRect(68, 97, ((int)(64-((16.0/25.0)*health_1))), 6), 0, GCornerNone);
-  }
+
+  //p2 
+  graphics_context_set_fill_color(ctx, GColorBlack);
+  graphics_fill_rect(ctx, GRect(9, 35, 2, 11), 0, GCornerNone);
+  graphics_fill_rect(ctx, GRect(9, 46, 70, 2), 0, GCornerNone);
+  graphics_fill_rect(ctx, GRect(13, 36, 66, 8), 0, GCornerNone);
+  graphics_context_set_fill_color(ctx, GColorWhite);
+  graphics_fill_rect(ctx, GRect(14, 37, 64, 6), 0, GCornerNone);
+  graphics_context_set_fill_color(ctx, GColorBlack);
+  //One after this is setting health bar, third element dictates health
+  graphics_fill_rect(ctx, GRect(14, 37, ((int)((16.0/25.0)*health_2)), 6), 0, GCornerNone);
+
+
+
+  //p1
+  graphics_context_set_fill_color(ctx, GColorBlack);
+  graphics_fill_rect(ctx, GRect(135, 95, 2, 11), 0, GCornerNone);
+  graphics_fill_rect(ctx, GRect(67, 106, 70, 2), 0, GCornerNone);
+  graphics_fill_rect(ctx, GRect(67, 96, 66, 8), 0, GCornerNone);
+  graphics_context_set_fill_color(ctx, GColorWhite);
+  //For p1, heath bar decided by opposite width
+  graphics_fill_rect(ctx, GRect(68, 97, ((int)(64-((16.0/25.0)*health_1))), 6), 0, GCornerNone);
+
+  graphics_context_set_stroke_color(ctx, GColorWhite);
+
+  // Main boxes
+  graphics_context_set_fill_color(ctx, GColorBlack);
+  graphics_fill_rect(ctx, GRect(3, 115, 138, 51), 0, GCornerNone);
+  graphics_context_set_fill_color(ctx, GColorWhite);
+  graphics_fill_rect(ctx, GRect(4, 116, 136, 47), 0, GCornerNone);
+  graphics_context_set_fill_color(ctx, GColorBlack);
+  graphics_fill_rect(ctx, GRect(6, 118, 132, 43), 0, GCornerNone);
+  graphics_context_set_fill_color(ctx, GColorWhite);
+  graphics_fill_rect(ctx, GRect(7, 121, 130, 39), 0, GCornerNone);
+
+  // Pokeballs
+  // Top left
+  graphics_context_set_fill_color(ctx, GColorBlack);
+  graphics_fill_circle(ctx, leftTop, 4);
+  graphics_context_set_fill_color(ctx, GColorWhite);
+  graphics_fill_circle(ctx, leftTop, 3);
+  graphics_context_set_fill_color(ctx, GColorBlack);
+  graphics_fill_rect(ctx, GRect(2, 114, 7, 3), 0, GCornerNone);
+  // Bottom left
+  graphics_context_set_fill_color(ctx, GColorBlack);
+  graphics_fill_circle(ctx, leftBottom, 4);
+  graphics_context_set_fill_color(ctx, GColorWhite);
+  graphics_fill_circle(ctx, leftBottom, 3);
+  graphics_context_set_fill_color(ctx, GColorBlack);
+  graphics_fill_rect(ctx, GRect(2, 159, 7, 3), 0, GCornerNone);
+  // Top right
+  graphics_context_set_fill_color(ctx, GColorBlack);
+  graphics_fill_circle(ctx, rightTop, 4);
+  graphics_context_set_fill_color(ctx, GColorWhite);
+  graphics_fill_circle(ctx, rightTop, 3);
+  graphics_context_set_fill_color(ctx, GColorBlack);
+  graphics_fill_rect(ctx, GRect(135, 114, 7, 3), 0, GCornerNone);
+  // Bottom right
+  graphics_context_set_fill_color(ctx, GColorBlack);
+  graphics_fill_circle(ctx, rightBottom, 4);
+  graphics_context_set_fill_color(ctx, GColorWhite);
+  graphics_fill_circle(ctx, rightBottom, 3);
+  graphics_context_set_fill_color(ctx, GColorBlack);
+  graphics_fill_rect(ctx, GRect(135, 159, 7, 3), 0, GCornerNone);
+  drawn = true;
 }
 
 static void window_load(Window* window) {
@@ -159,7 +155,7 @@ static void window_load(Window* window) {
   text_layer_set_background_color(battle_text_layer, GColorClear);
   text_layer_set_text_color(battle_text_layer, GColorBlack);
   text_layer_set_font(battle_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14));
-  text_layer_set_text(battle_text_layer, "Sample text is what I am go go go");
+  text_layer_set_text(battle_text_layer, game_text_buffer[select_count]);
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(battle_text_layer));
   
   
