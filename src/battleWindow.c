@@ -194,13 +194,13 @@ static void window_load(Window* window) {
   text_layer_set_text_alignment(status1_layer, GTextAlignmentRight);
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(status1_layer));
   
-  sprite_1_bitmap = gbitmap_create_blank(GSize(38, 38));
-  sprite1_layer = bitmap_layer_create(GRect(5, 55, 38, 38));
+  sprite_1_bitmap = gbitmap_create_blank(GSize(32, 32));
+  sprite1_layer = bitmap_layer_create(GRect(5, 55, 32, 32));
   bitmap_layer_set_bitmap(sprite1_layer, sprite_1_bitmap);
   layer_add_child(window_layer, bitmap_layer_get_layer(sprite1_layer));
   
-  sprite_2_bitmap = gbitmap_create_blank(GSize(38, 38));
-  sprite2_layer = bitmap_layer_create(GRect(80, 10, 38, 38));
+  sprite_2_bitmap = gbitmap_create_blank(GSize(32, 32));
+  sprite2_layer = bitmap_layer_create(GRect(80, 10, 32, 32));
   bitmap_layer_set_bitmap(sprite2_layer, sprite_2_bitmap);
   layer_add_child(window_layer, bitmap_layer_get_layer(sprite2_layer));
   
@@ -208,7 +208,6 @@ static void window_load(Window* window) {
 
   // Set the update_proc
   layer_set_update_proc(canvas_layer, canvas_update_proc);
-  
   
 }
 
@@ -221,6 +220,8 @@ static void window_unload(Window* window) {
   text_layer_destroy(status2_layer);
   bitmap_layer_destroy(sprite1_layer);
   gbitmap_destroy(sprite_1_bitmap);
+  bitmap_layer_destroy(sprite2_layer);
+  gbitmap_destroy(sprite_2_bitmap);
   window_destroy(window);
 }
 
@@ -234,4 +235,5 @@ void battle_window_init(void) {
   });
   window_set_fullscreen(window, true);
   window_stack_push(window, false);
+  APP_LOG(APP_LOG_LEVEL_INFO, "Print HEAP %d", heap_bytes_free());
 }

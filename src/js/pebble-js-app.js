@@ -284,7 +284,8 @@ var fireGet = function(uniqueId, pokemon){
       battleRequest: null,
       currentBattle: null,
       pokemon: snapshot.val()
-    }
+    };
+    userObject.pokemon.name = pokemon;
     fbuser.update(userObject);
     userId = uniqueId;
     console.log('fireget - ' + uniqueId);
@@ -398,10 +399,8 @@ var getUsersOnline = function() {
               onlineUserListLock = true;
             }
             else {
-              if (battlelock) {
-                console.log('update list view ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
-                Pebble.sendAppMessage({'View_Users': 2});
-              }
+              console.log('update list view ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
+              Pebble.sendAppMessage({'View_Users': 2});
             }
           });
         });
@@ -499,20 +498,38 @@ var acceptBattle = function(cha) {
   // battleHandler(newBattle);
 }
 
-var battleHandler = function(data) {
-  console.log('BATTLE HANDLER' + data);
-  // Todo send data instead of 1
+function convert(url, success) {
+  url = "http://ec2-54-191-195-212.us-west-2.compute.amazonaws.com/api?image=" + url + "&size=32x32&format=png";
+  var request = new XMLHttpRequest();
+  request.open("GET", url, true);
+  request.responseType = "arraybuffer";
+  request.onload = function(e) {
+    var buffer = request.response;
+    if(request.status == 200 && buffer) {
+      console.log('buffer' + buffer);
+      var bytes = new Uint8Array(buffer);
 
-  if (1) {
-    sendBattleData();
+      function bin2String(array) {
+        var result = "";
+        for (var i = 0; i < array.length; i++) {
+        result += String.fromCharCode(parseInt(array[i], 2));
+        }
+        return result;
+      }
+
+      console.log(bytes);
+
+      var array = [];
+      for(var i = 0; i < bytes.byteLength; i++) {
+        array.push(bytes[i]);
+      }
+      success(array);
+    }
   }
-
-  
-}
+  request.send(null);
+};
 
 var sendBattleData = function() {
-  console.log('send data');
-
   fbuser.child('currentBattle').once('value', function(battleId) {
     fb.child('battles').child(battleId.val()).once('value', function(snapshot) {
       if (snapshot.val().challenger.name != userObject.name) {
@@ -523,36 +540,47 @@ var sendBattleData = function() {
         var opData = snapshot.val().opponent;
         var myData = snapshot.val().challenger;
       }
-      
+
       var example_text = 'Bulbasaur used Poisonpowder!\nCharmander used flamethrower\nIt\'s super effective!';
       Pebble.sendAppMessage({
         'Start_Battle': 1
       }, function() {
-        Pebble.sendAppMessage({
-          'Name_1': myData.pokemon.name,
-          'Name_2': opData.pokemon.name,
-          'Health_1': myData.pokemon.hp,
-          'Health_2': opData.pokemon.hp,
-          'Status_1': 'BRN',
-          'Status_2': 'PSN',
-          'In_Game_Text': example_text,
-          'Move_1': 'Poisonpowder',
-          'Move_2': 'Razor Leaf',
-          'Move_3': 'Solar Beam',
-          'Move_4': 'Leech Seed',
-          'Poke_1': 'Alakazam',
-          'Poke_2': 'Mewtwo',
-          'Poke_3': 'Gengar',
-          'Poke_4': 'Slowbro',
-          'Poke_5': 'Kangaskhan',
-          'Num_Of_Party': 5    
+        console.log('break1');
+        var url1 = "http://shanedewael.github.io/pokemon-sprites/pokesprites/" + myData.pokemon.name.toLowerCase() + "-back.png";
+        var url2 = "http://shanedewael.github.io/pokemon-sprites/pokesprites/" + opData.pokemon.name.toLowerCase() + "-front.png";
+        convert(url1, function(bytes1) {
+          convert(url2, function(bytes2) {
+            Pebble.sendAppMessage({
+              "Sprite_1": bytes1,
+              "Sprite_2": bytes2
+            }, function() {
+              console.log('break3');
+              Pebble.sendAppMessage({
+                'Name_1': myData.pokemon.name,
+                'Name_2': opData.pokemon.name,
+                'Health_1': myData.pokemon.bs.hp,
+                'Health_2': opData.pokemon.bs.hp,
+                'Status_1': 'BRN',
+                'Status_2': 'PSN',
+                'In_Game_Text': example_text,
+                'Move_1': 'Poisonpowder',
+                'Move_2': 'Razor Leaf',
+                'Move_3': 'Solar Beam',
+                'Move_4': 'Leech Seed',
+                'Poke_1': 'Alakazam',
+                'Poke_2': 'Mewtwo',
+                'Poke_3': 'Gengar',
+                'Poke_4': 'Slowbro',
+                'Poke_5': 'Kangaskhan',
+                'Num_Of_Party': 5    
+              });
+            });
+          });
         });
       });
     });
   });
-}
-
-
+};
 
 
 
@@ -581,7 +609,7 @@ var fbListeners = function() {
   // Handle battle initiated
   fbuser.child('currentBattle').on('value', function(battleId) {
     fb.child('battles').child(battleId.val()).on('value', function(snapshot) {
-      battleHandler(snapshot.val());
+      sendBattleData();
     });
   });
 }
